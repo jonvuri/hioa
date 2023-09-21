@@ -5,6 +5,15 @@ settings:
   excludeLinksFromLockfile: false
 
 dependencies:
+  '@sqlite.org/sqlite-wasm':
+    specifier: 3.43.0-build3
+    version: 3.43.0-build3
+  on-change:
+    specifier: ^4.0.2
+    version: 4.0.2
+  promise-worker-bi:
+    specifier: ^4.1.1
+    version: 4.1.1
   solid-js:
     specifier: ^1.7.6
     version: 1.7.6
@@ -881,6 +890,13 @@ packages:
       solid-js: 1.7.6
     dev: true
 
+  /@sqlite.org/sqlite-wasm@3.43.0-build3:
+    resolution: {integrity: sha512-Iry/g6VlbYTeGb7XWBZZKGmB4KRFFKxv3urcJwYXL88cr3hxJK2QmO1v0fQ5gOns23R+422XGSGvwjl51za3fg==}
+    hasBin: true
+    optionalDependencies:
+      comlink: 4.4.1
+    dev: false
+
   /@types/babel__core@7.20.1:
     resolution: {integrity: sha512-aACu/U/omhdk15O4Nfb+fHgH/z3QsfQzpnvRZhYhThms83ZnAOZz7zZAWO7mn2yyNQaA4xTO8GLK3uqFU4bYYw==}
     dependencies:
@@ -1225,6 +1241,12 @@ packages:
   /color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
     dev: true
+
+  /comlink@4.4.1:
+    resolution: {integrity: sha512-+1dlx0aY5Jo1vHy/tSsIGpSkN4tS9rZSW8FIhG0JH/crs9wwweswIo/POr451r7bZww3hFbPAKnTpimzL/mm4Q==}
+    requiresBuild: true
+    dev: false
+    optional: true
 
   /concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}
@@ -1767,6 +1789,11 @@ packages:
     engines: {node: '>=0.10.0'}
     dev: true
 
+  /on-change@4.0.2:
+    resolution: {integrity: sha512-cMtCyuJmTx/bg2HCpHo3ZLeF7FZnBOapLqZHr2AlLeJ5Ul0Zu2mUJJz051Fdwu/Et2YW04ZD+TtU+gVy0ACNCA==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
+    dev: false
+
   /once@1.4.0:
     resolution: {integrity: sha512-lNaJgI+2Q5URQBkccEKHTQOPaXdUxnZZElQTZY0MFUAuaEqe1E+Nyvgdz/aIyNi6Z9MzO5dv1H8n58/GELp3+w==}
     dependencies:
@@ -1854,6 +1881,10 @@ packages:
     engines: {node: '>=14'}
     hasBin: true
     dev: true
+
+  /promise-worker-bi@4.1.1:
+    resolution: {integrity: sha512-8IF9KDl324zJ/Epuz1a3PmfwiT0JnVgRi09E2aZGqaOTkBg7oSIz9xB/p2Lgr2KHsbaiJeyUeyhs5vxMtI0dIw==}
+    dev: false
 
   /punycode@2.3.0:
     resolution: {integrity: sha512-rRV+zQD8tVFys26lAGR9WUuS4iUAngJScM+ZRSKtvl5tKeZ2t5bvdNFdNHBW9FWR4guGHlgmsZ1G7BSm2wTbuA==}

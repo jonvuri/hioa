@@ -24,6 +24,9 @@
     "vite-plugin-solid": "^2.7.0"
   },
   "dependencies": {
+    "@sqlite.org/sqlite-wasm": "3.43.0-build3",
+    "on-change": "^4.0.2",
+    "promise-worker-bi": "^4.1.1",
     "solid-js": "^1.7.6",
     "solid-surfaces": "../surfaces/solid-surfaces"
   }
