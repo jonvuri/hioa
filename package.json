@@ -28,6 +28,8 @@
     "on-change": "^4.0.2",
     "promise-worker-bi": "^4.1.1",
     "solid-js": "^1.7.6",
-    "solid-surfaces": "../surfaces/solid-surfaces"
+    "solid-surfaces": "../surfaces/solid-surfaces",
+    "solid-transition-group": "^0.2.3",
+    "surface-fonts": "../surfaces/surface-fonts"
   }
 }

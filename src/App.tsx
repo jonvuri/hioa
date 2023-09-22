@@ -4,6 +4,7 @@ import Main from 'solid-surfaces/components/Main'
 import { ContrastHeader, Subheader } from 'solid-surfaces/components/typo/Header'
 import Input from 'solid-surfaces/components/Input'
 import Tagged from 'solid-surfaces/components/stellation/Tagged'
+import 'surface-fonts/index.css'
 
 import { execSql, ExecResults } from './db/client'
 import RootMatrix from './matrix/view/RootMatrix'

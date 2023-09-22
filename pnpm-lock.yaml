@@ -17,6 +17,9 @@ dependencies:
   solid-js:
     specifier: ^1.7.6
     version: 1.7.6
+  solid-transition-group:
+    specifier: ^0.2.3
+    version: 0.2.3(solid-js@1.7.6)
 
 devDependencies:
   '@typescript-eslint/eslint-plugin':
@@ -825,6 +828,15 @@ packages:
       solid-js: 1.7.6
     dev: true
 
+  /@solid-primitives/refs@1.0.5(solid-js@1.7.6):
+    resolution: {integrity: sha512-5hmYmYbm6rs43nMHHozyyUngGA7P7q2WtlaCLJEfmlUJf67GWI1PZmqAiol6m9F37XSMZRuvZLoQ7HA/0q3GYg==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/utils': 6.2.1(solid-js@1.7.6)
+      solid-js: 1.7.6
+    dev: false
+
   /@solid-primitives/resize-observer@2.0.18(solid-js@1.7.6):
     resolution: {integrity: sha512-k4jTqa2hQc1HBLGUUSy69ziVJF2xlBzglUp2Saeor7RrZiWudODGyoUMdNAY+PN3iH4zyH4eEa/Fs+9kIrREig==}
     peerDependencies:
@@ -882,6 +894,14 @@ packages:
       solid-js: 1.7.6
     dev: true
 
+  /@solid-primitives/transition-group@1.0.3(solid-js@1.7.6):
+    resolution: {integrity: sha512-TnFADZhx9sibdoW5gxkU1QmLabzV2H2OBKYGS2aR5IC61Q/+7v8wlxOJEevxXNbPiRo6qlE3STLU3L9XS8hDbA==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      solid-js: 1.7.6
+    dev: false
+
   /@solid-primitives/utils@6.2.0(solid-js@1.7.6):
     resolution: {integrity: sha512-T62WlLwKkbmicsw/xpwMQyv9MmZRSaVyutXfS5icc9v0cb8qGMUxRxr5LVvZHYQCZ9DEFboZB0r711xsbVBbeA==}
     peerDependencies:
@@ -889,6 +909,14 @@ packages:
     dependencies:
       solid-js: 1.7.6
     dev: true
+
+  /@solid-primitives/utils@6.2.1(solid-js@1.7.6):
+    resolution: {integrity: sha512-TsecNzxiO5bLfzqb4OOuzfUmdOROcssuGqgh5rXMMaasoFZ3GoveUgdY1wcf17frMJM7kCNGNuK34EjErneZkg==}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      solid-js: 1.7.6
+    dev: false
 
   /@sqlite.org/sqlite-wasm@3.43.0-build3:
     resolution: {integrity: sha512-Iry/g6VlbYTeGb7XWBZZKGmB4KRFFKxv3urcJwYXL88cr3hxJK2QmO1v0fQ5gOns23R+422XGSGvwjl51za3fg==}
@@ -2016,6 +2044,17 @@ packages:
       '@babel/types': 7.22.5
       solid-js: 1.7.6
     dev: true
+
+  /solid-transition-group@0.2.3(solid-js@1.7.6):
+    resolution: {integrity: sha512-iB72c9N5Kz9ykRqIXl0lQohOau4t0dhel9kjwFvx81UZJbVwaChMuBuyhiZmK24b8aKEK0w3uFM96ZxzcyZGdg==}
+    engines: {node: '>=18.0.0', pnpm: '>=8.6.0'}
+    peerDependencies:
+      solid-js: ^1.6.12
+    dependencies:
+      '@solid-primitives/refs': 1.0.5(solid-js@1.7.6)
+      '@solid-primitives/transition-group': 1.0.3(solid-js@1.7.6)
+      solid-js: 1.7.6
+    dev: false
 
   /source-map-js@1.0.2:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}

@@ -1,6 +1,7 @@
-import { Component, For, createSignal, onCleanup } from 'solid-js'
+import { Component, For, Show, createSignal, onCleanup } from 'solid-js'
 import Button from 'solid-surfaces/components/Button'
 import Input from 'solid-surfaces/components/Input'
+import { Transition } from 'solid-transition-group'
 
 import { createMatrix } from '../harmonizer'
 import { subscribeSql } from '../../db/client'
@@ -70,12 +71,16 @@ const RootMatrix: Component = () => {
       <Button onClick={handleToggleHideMatrix}>
         {hideMatrix() ? 'Show matrix' : 'Hide matrix'}
       </Button>
-      {!hideMatrix() && selectedMatrixId() && (
-        <>
-          <div>[ selected matrix: {selectedMatrixId()} ]</div>
-          <Matrix matrix_id={selectedMatrixId} />
-        </>
-      )}
+      <Transition name="matrix-fade">
+        <Show when={!hideMatrix()}>
+          {!hideMatrix() && selectedMatrixId() && (
+            <div>
+              <div>[ selected matrix: {selectedMatrixId()} ]</div>
+              <Matrix matrix_id={selectedMatrixId} />
+            </div>
+          )}
+        </Show>
+      </Transition>
     </>
   )
 }

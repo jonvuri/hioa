@@ -1,12 +1,14 @@
 import {
   Accessor,
   Component,
+  Show,
   createEffect,
   createMemo,
   createResource,
   onCleanup,
 } from 'solid-js'
 import Table from 'solid-surfaces/components/Table'
+import { Transition } from 'solid-transition-group'
 
 import { getMatrixHarmonics } from '../harmonizer'
 import { subscribeSql } from '../../db/client'
@@ -46,16 +48,17 @@ const Matrix: Component<MatrixProps> = (props) => {
     })) || []
 
   return (
-    <>
-      {harmonics.loading ? (
-        <>[ m load matrix .. ] [{props.matrix_id()}]</>
-      ) : (
-        <>
+    <Transition name="matrix-fade">
+      <Show
+        when={!harmonics.loading}
+        fallback={<div>[ m load matrix .. ] [{props.matrix_id()}]</div>}
+      >
+        <div>
           <Header>{harmonics()?.matrix_name}</Header> [{props.matrix_id()}]
           <Table columns={columnSpecs()} data={result} />
-        </>
-      )}
-    </>
+        </div>
+      </Show>
+    </Transition>
   )
 }
 
