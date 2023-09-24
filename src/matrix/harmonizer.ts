@@ -1,11 +1,5 @@
 import { execSql, subscribeSql } from '../db/client'
 
-type ColumnDefinition = {
-  column_id: string
-  column_name: string
-  column_type: 'string' | 'number' | 'boolean'
-}
-
 // Initialize harmonics table on load if it doesn't yet exist
 export const initialize = () =>
   execSql(`
@@ -43,8 +37,8 @@ export const createMatrix = (name: string) => {
 }
 
 export const listMatrices = () =>
-  subscribeSql<{ matrix_id: string; matrix_name: string }>(
-    `
+  subscribeSql<{ matrix_id: string; matrix_name: string }[]>(
+    () => `
       SELECT
         matrix_id,
         matrix_name
@@ -53,23 +47,31 @@ export const listMatrices = () =>
     `,
   )
 
-export const getMatrixHarmonics = async (matrix_id: string) => {
-  const result = (await execSql(`
-    SELECT
-      matrix_name,
-      column_definitions
-    FROM
-      __MatrixHarmonics
-    WHERE
-      matrix_id = '${matrix_id}';
-  `)) as { matrix_name: string; column_definitions: string }[]
-
-  if (result.length === 0) {
-    throw new Error(`Matrix ${matrix_id} not found`)
-  }
-
-  return {
-    matrix_name: result[0].matrix_name,
-    column_definitions: JSON.parse(result[0].column_definitions) as ColumnDefinition[],
-  }
+export const getMatrixHarmonics = (matrix_id: () => string) => {
+  return subscribeSql<
+    {
+      matrix_name: string
+      column_definitions: string
+    }[]
+  >(
+    () => `
+      SELECT
+        matrix_name,
+        column_definitions
+      FROM
+        __MatrixHarmonics
+      WHERE
+        matrix_id = '${matrix_id()}';
+    `,
+  )
 }
+
+export const getMatrix = (matrix_id: () => string) =>
+  subscribeSql<{ matrix_id: string; matrix_name: string }[]>(
+    () => `
+      SELECT
+        *
+      FROM
+        ${matrix_id()};
+    `,
+  )

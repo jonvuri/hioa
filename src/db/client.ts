@@ -4,6 +4,7 @@ import { PWBHost } from 'promise-worker-bi'
 import DbWorker from './worker?worker'
 
 import { ClientMessage, WorkerMessage } from './types'
+import { createMemo, onCleanup } from 'solid-js'
 
 const worker = new DbWorker()
 const promiseWorker = new PWBHost(worker)
@@ -102,38 +103,54 @@ declare global {
 }
 window.sql = execSql
 
-// subcribe should return cleanup fn in tuple w/ result
-export const subscribeSql = <RowType>(sql: string) => {
-  type Store = {
-    result: RowType[]
-    loading: boolean
-    error: string | null
-  }
+type Store<T> =
+  | {
+      result: T | null
+      loading: true
+      error: string | null
+    }
+  | {
+      result: T
+      loading: false
+      error: null
+    }
+  | {
+      result: null
+      loading: false
+      error: string
+    }
 
-  const [result, setResult] = createStore<Store>({
-    result: [],
+// Retry doing this with accessor and onCleanup in subscribe itself
+export const subscribeSql = <Result>(sql: () => string) => {
+  // Try using a Signal here instead if this misbehaves
+  const [store, setStore] = createStore<Store<Result>>({
+    result: null,
     loading: true,
     error: null,
   })
 
-  const listener = ((rows: RowType[]) => {
-    setResult(
-      reconcile(
-        {
-          result: rows,
-          loading: false,
-          error: null,
-        },
-        { key: 'rowid' },
-      ),
-    )
-  }) as ListenerCallback
+  createMemo(() => {
+    // TODO: Error handling
+    const listener = ((rows: unknown) => {
+      setStore(
+        reconcile(
+          {
+            result: rows as Result,
+            loading: false,
+            error: null,
+          },
+          { key: 'rowid' },
+        ),
+      )
+    }) as ListenerCallback
 
-  addListener(sql, listener)
+    addListener(sql(), listener)
 
-  const onCleanup = () => {
-    removeListener(listener)
-  }
+    onCleanup(() => {
+      console.log('Subscribe removing listener')
+      removeListener(listener)
+    })
+  })
 
-  return [result as Store, onCleanup] as const
+  return store
 }

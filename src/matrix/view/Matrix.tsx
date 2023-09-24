@@ -1,17 +1,8 @@
-import {
-  Accessor,
-  Component,
-  Show,
-  createEffect,
-  createMemo,
-  createResource,
-  onCleanup,
-} from 'solid-js'
+import { Accessor, Component, Show, createMemo } from 'solid-js'
 import Table from 'solid-surfaces/components/Table'
 import { Transition } from 'solid-transition-group'
 
-import { getMatrixHarmonics } from '../harmonizer'
-import { subscribeSql } from '../../db/client'
+import { getMatrixHarmonics, getMatrix } from '../harmonizer'
 import { Header } from 'solid-surfaces/components/typo/Header'
 
 type MatrixProps = {
@@ -19,33 +10,29 @@ type MatrixProps = {
 }
 
 const Matrix: Component<MatrixProps> = (props) => {
-  const [harmonics] = createResource(props.matrix_id, getMatrixHarmonics)
+  const harmonics = getMatrixHarmonics(props.matrix_id)
 
-  const subscribe = createMemo<ReturnType<typeof subscribeSql> | null>((prev) => {
-    if (prev) {
-      const cleanup = prev[1]
-      cleanup()
-    }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return subscribeSql<any>(`SELECT * FROM ${props.matrix_id()}`)
-  }, null)
+  const matrixStore = getMatrix(props.matrix_id)
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const result = (subscribe()?.[0]?.result || []) as any[]
+  type ColumnDefinition = {
+    column_id: string
+    column_name: string
+  }
 
-  createEffect(() => {
-    const cleanup = subscribe()?.[1]
+  const columnSpecs = createMemo(() => {
+    const result = harmonics?.result
 
-    if (cleanup) {
-      onCleanup(cleanup)
-    }
+    return (
+      result?.[0] &&
+      (JSON.parse(result[0].column_definitions).map((def: ColumnDefinition) => ({
+        key: def.column_id,
+        name: def.column_name,
+      })) ||
+        [])
+    )
   })
 
-  const columnSpecs = () =>
-    harmonics()?.column_definitions.map((def) => ({
-      key: def.column_id,
-      name: def.column_name,
-    })) || []
+  const name = () => harmonics?.result?.[0].matrix_name
 
   return (
     <Transition name="matrix-fade">
@@ -53,10 +40,15 @@ const Matrix: Component<MatrixProps> = (props) => {
         when={!harmonics.loading}
         fallback={<div>[ m load matrix .. ] [{props.matrix_id()}]</div>}
       >
-        <div>
-          <Header>{harmonics()?.matrix_name}</Header> [{props.matrix_id()}]
-          <Table columns={columnSpecs()} data={result} />
-        </div>
+        <Show
+          when={!matrixStore.error}
+          fallback={<div>[ m load error ! ] [{harmonics.error}]</div>}
+        >
+          <div>
+            <Header>{name()}</Header> [{props.matrix_id()}]
+            <Table columns={columnSpecs()} data={matrixStore.result!} />
+          </div>
+        </Show>
       </Show>
     </Transition>
   )

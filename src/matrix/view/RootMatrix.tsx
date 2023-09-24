@@ -1,10 +1,9 @@
-import { Component, For, Show, createSignal, onCleanup } from 'solid-js'
+import { Component, For, Show, createSignal } from 'solid-js'
 import Button from 'solid-surfaces/components/Button'
 import Input from 'solid-surfaces/components/Input'
 import { Transition } from 'solid-transition-group'
 
-import { createMatrix } from '../harmonizer'
-import { subscribeSql } from '../../db/client'
+import { createMatrix, listMatrices } from '../harmonizer'
 
 import styles from './RootMatrix.module.sass'
 import Matrix from './Matrix'
@@ -14,17 +13,7 @@ const RootMatrix: Component = () => {
   const [selectedMatrixId, setSelectedMatrixId] = createSignal('')
   const [hideMatrix, setHideMatrix] = createSignal(false)
 
-  const [matrices, cleanup] = subscribeSql<{ matrix_id: string; matrix_name: string }>(
-    `
-      SELECT
-        matrix_id,
-        matrix_name
-      FROM
-        __MatrixHarmonics;
-    `,
-  )
-
-  onCleanup(cleanup)
+  const matrices = listMatrices()
 
   const handleInput = (e: Event) => {
     const target = e.target as HTMLInputElement

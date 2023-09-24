@@ -66,15 +66,18 @@ const runStatement = (sql: Sql) => {
   }
 }
 
+// TODO: Parse SQL to determine which tables are being queried and only subscribe to those
 const addStatement = (db: OpfsDatabase, sql: Sql) => {
   if (statements[sql]) {
     return
   }
 
   statements[sql] = db.prepare(sql)
+  sendLog('Added statement: ', sql)
+  sendLog('Statements: \n', Object.keys(statements).join('\n'))
 }
 
-const removeStatement = (db: OpfsDatabase, sql: Sql) => {
+const removeStatement = (sql: Sql) => {
   const statement = statements[sql]
 
   if (!statement) {
@@ -84,6 +87,12 @@ const removeStatement = (db: OpfsDatabase, sql: Sql) => {
   delete statements[sql]
 
   statement.finalize()
+  sendLog('Removed statement: ', sql)
+  if (Object.keys(statements).length === 0) {
+    sendLog('No more statements')
+  } else {
+    sendLog('Statements: \n', Object.keys(statements).join('\n'))
+  }
 }
 
 let dbReady: (db: OpfsDatabase) => void = () => {
@@ -115,7 +124,7 @@ promiseWorker.register(async (msg: unknown) => {
       runStatement(message.payload)
       break
     case 'unsubscribe':
-      removeStatement(db, message.payload)
+      removeStatement(message.payload)
       break
     default:
       sendError('Unknown message type', message)
