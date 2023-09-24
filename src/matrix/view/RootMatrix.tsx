@@ -5,8 +5,10 @@ import { Transition } from 'solid-transition-group'
 
 import { createMatrix, listMatrices } from '../harmonizer'
 
-import styles from './RootMatrix.module.sass'
 import Matrix from './Matrix'
+import MatrixInput from './MatrixInput'
+
+import styles from './RootMatrix.module.sass'
 
 const RootMatrix: Component = () => {
   const [newMatrixName, setNewMatrixName] = createSignal('')
@@ -66,6 +68,7 @@ const RootMatrix: Component = () => {
             <div>
               <div>[ selected matrix: {selectedMatrixId()} ]</div>
               <Matrix matrix_id={selectedMatrixId} />
+              <MatrixInput matrix_id={selectedMatrixId} />
             </div>
           )}
         </Show>

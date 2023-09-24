@@ -1,4 +1,18 @@
-import { execSql, subscribeSql } from '../db/client'
+import { createMemo } from 'solid-js'
+import { createStore } from 'solid-js/store'
+
+import { execSql, subscribeSql, Store } from '../db/client'
+
+export enum ColumnType {
+  Text = 'TEXT',
+  Number = 'REAL',
+}
+
+type ColumnDefinition = {
+  column_id: string
+  column_name: string
+  column_type?: string
+}
 
 // Initialize harmonics table on load if it doesn't yet exist
 export const initialize = () =>
@@ -48,7 +62,7 @@ export const listMatrices = () =>
   )
 
 export const getMatrixHarmonics = (matrix_id: () => string) => {
-  return subscribeSql<
+  const subscription = subscribeSql<
     {
       matrix_name: string
       column_definitions: string
@@ -64,6 +78,33 @@ export const getMatrixHarmonics = (matrix_id: () => string) => {
         matrix_id = '${matrix_id()}';
     `,
   )
+
+  const [hydratedHarmonics, setHydratedHarmonics] = createStore<
+    Store<{
+      matrix_name: string
+      column_definitions: ColumnDefinition[]
+    }>
+  >({
+    result: null,
+    loading: true,
+    error: null,
+  })
+
+  createMemo(() => {
+    const harmonics = subscription.result?.[0]
+    if (harmonics) {
+      setHydratedHarmonics({
+        result: {
+          matrix_name: harmonics.matrix_name,
+          column_definitions: JSON.parse(harmonics.column_definitions),
+        },
+        loading: false,
+        error: null,
+      })
+    }
+  })
+
+  return hydratedHarmonics
 }
 
 export const getMatrix = (matrix_id: () => string) =>
@@ -75,3 +116,37 @@ export const getMatrix = (matrix_id: () => string) =>
         ${matrix_id()};
     `,
   )
+
+export const addMatrixColumn = (
+  matrix_id: string,
+  column_name: string,
+  column_type: ColumnType,
+) => {
+  const column_id = `__Column_${Date.now().toString(16)}`
+
+  return execSql(`
+    BEGIN;
+
+    -- Add the column to the matrix table
+    ALTER TABLE ${matrix_id}
+    ADD ${column_name} ${column_type};
+
+    -- Update the column definitions in the harmonics table
+    UPDATE __MatrixHarmonics
+    SET column_definitions = json_insert(
+      column_definitions,
+      '$[#]',
+      json_object(
+        'column_id',
+        '${column_id}',
+        'column_name',
+        '${column_name}',
+        'column_type',
+        '${column_type}'
+      )
+    )
+    WHERE matrix_id = '${matrix_id}';
+
+    COMMIT;
+  `)
+}

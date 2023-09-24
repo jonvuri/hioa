@@ -1,4 +1,4 @@
-import { Accessor, Component, Show, createMemo } from 'solid-js'
+import { Accessor, Component, Show } from 'solid-js'
 import Table from 'solid-surfaces/components/Table'
 import { Transition } from 'solid-transition-group'
 
@@ -19,30 +19,27 @@ const Matrix: Component<MatrixProps> = (props) => {
     column_name: string
   }
 
-  const columnSpecs = createMemo(() => {
-    const result = harmonics?.result
-
-    return (
-      result?.[0] &&
-      (JSON.parse(result[0].column_definitions).map((def: ColumnDefinition) => ({
-        key: def.column_id,
-        name: def.column_name,
-      })) ||
-        [])
-    )
-  })
-
-  const name = () => harmonics?.result?.[0].matrix_name
+  const name = () => harmonics?.result?.matrix_name
+  const columnSpecs = () =>
+    harmonics?.result?.column_definitions.map((column: ColumnDefinition) => ({
+      key: column.column_id,
+      name: column.column_name,
+    })) || []
 
   return (
     <Transition name="matrix-fade">
       <Show
-        when={!harmonics.loading}
+        when={!harmonics.loading && !matrixStore.loading}
         fallback={<div>[ m load matrix .. ] [{props.matrix_id()}]</div>}
       >
         <Show
-          when={!matrixStore.error}
-          fallback={<div>[ m load error ! ] [{harmonics.error}]</div>}
+          when={!harmonics.error && !matrixStore.error}
+          fallback={
+            <div>
+              [ m load error ! ] [{harmonics.error && ` ${harmonics.error} `}
+              {matrixStore.error && ` ${matrixStore.error} `}]
+            </div>
+          }
         >
           <div>
             <Header>{name()}</Header> [{props.matrix_id()}]

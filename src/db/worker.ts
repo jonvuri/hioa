@@ -52,11 +52,7 @@ const runStatement = (sql: Sql) => {
       rows.push(statement.get({}))
     }
 
-    if (rows.length > 0) {
-      sendSubscribedQueryResult(sql, rows)
-    } else {
-      sendLog('No rows returned for: ', sql)
-    }
+    sendSubscribedQueryResult(sql, rows)
   } catch (err: unknown) {
     if (err instanceof Error) {
       sendSubscribedQueryError(sql, err.message)

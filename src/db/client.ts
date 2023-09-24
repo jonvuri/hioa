@@ -103,7 +103,7 @@ declare global {
 }
 window.sql = execSql
 
-type Store<T> =
+export type Store<T> =
   | {
       result: T | null
       loading: true
