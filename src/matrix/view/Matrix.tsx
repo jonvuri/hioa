@@ -5,6 +5,8 @@ import { Transition } from 'solid-transition-group'
 import { getMatrixHarmonics, getMatrix } from '../harmonizer'
 import { Header } from 'solid-surfaces/components/typo/Header'
 
+import styles from './Matrix.module.sass'
+
 type MatrixProps = {
   matrix_id: Accessor<string>
 }
@@ -41,7 +43,7 @@ const Matrix: Component<MatrixProps> = (props) => {
             </div>
           }
         >
-          <div>
+          <div class={styles.container}>
             <Header>{name()}</Header> [{props.matrix_id()}]
             <Table columns={columnSpecs()} data={matrixStore.result!} />
           </div>

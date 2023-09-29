@@ -7,6 +7,8 @@ import { Transition } from 'solid-transition-group'
 import { addMatrixColumn, getMatrixHarmonics, ColumnType } from '../harmonizer'
 import Button from 'solid-surfaces/components/Button'
 
+import styles from './MatrixInput.module.sass'
+
 const DEFAULT_COLUMN_TYPE = ColumnType.Text
 
 type MatrixInputProps = {
@@ -38,11 +40,11 @@ const MatrixInput: Component<MatrixInputProps> = (props) => {
 
   return (
     <Transition name="matrix-fade">
-      <Show
-        when={!harmonics.loading}
-        fallback={<div>[ m input req .. ] [{props.matrix_id()}]</div>}
-      >
-        <Boxed>
+      <Boxed class={styles.container}>
+        <Show
+          when={!harmonics.loading}
+          fallback={<div>[ m input req .. ] [{props.matrix_id()}]</div>}
+        >
           <Show
             when={harmonics?.result?.column_definitions?.length}
             fallback={<Dimmed>[ no columns yet ]</Dimmed>}
@@ -90,8 +92,8 @@ const MatrixInput: Component<MatrixInputProps> = (props) => {
               <Dimmed>[ adding {newColumnName()} ]</Dimmed>
             </Match>
           </Switch>
-        </Boxed>
-      </Show>
+        </Show>
+      </Boxed>
     </Transition>
   )
 }

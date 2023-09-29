@@ -1,5 +1,4 @@
-import { Component, For, Show, createSignal } from 'solid-js'
-import Button from 'solid-surfaces/components/Button'
+import { Component, For, createSignal } from 'solid-js'
 import Input from 'solid-surfaces/components/Input'
 import { Transition } from 'solid-transition-group'
 
@@ -9,11 +8,12 @@ import Matrix from './Matrix'
 import MatrixInput from './MatrixInput'
 
 import styles from './RootMatrix.module.sass'
+import { Grid } from 'solid-surfaces/components/Grid'
+import Boxed from 'solid-surfaces/components/stellation/Boxed'
 
 const RootMatrix: Component = () => {
   const [newMatrixName, setNewMatrixName] = createSignal('')
   const [selectedMatrixId, setSelectedMatrixId] = createSignal('')
-  const [hideMatrix, setHideMatrix] = createSignal(false)
 
   const matrices = listMatrices()
 
@@ -32,48 +32,48 @@ const RootMatrix: Component = () => {
     setSelectedMatrixId(matrixId)
   }
 
-  const handleToggleHideMatrix = () => {
-    setHideMatrix(!hideMatrix())
-  }
-
   return (
-    <>
-      <Input
-        type="text"
-        label="Insert new matrix"
-        placeholder="Matrix name"
-        onInput={handleInput}
-        onKeyDown={handleKeyDown}
-      />
-      {matrices.loading ? (
-        '[ m list load .. ]'
-      ) : (
-        <For each={matrices.result || []}>
-          {(matrix) => (
-            <div
-              class={styles['matrix-row']}
-              onClick={handleMatrixSelect(matrix.matrix_id)}
-            >
-              {matrix.matrix_name} [{matrix.matrix_id}]
-            </div>
-          )}
-        </For>
-      )}
-      <Button onClick={handleToggleHideMatrix}>
-        {hideMatrix() ? 'Show matrix' : 'Hide matrix'}
-      </Button>
-      <Transition name="matrix-fade">
-        <Show when={!hideMatrix()}>
-          {!hideMatrix() && selectedMatrixId() && (
+    <Grid full subgrid row_template="1fr auto">
+      <Grid full>
+        <Transition name="matrix-fade">
+          {selectedMatrixId() ? (
+            <Matrix matrix_id={selectedMatrixId} />
+          ) : (
             <div>
-              <div>[ selected matrix: {selectedMatrixId()} ]</div>
-              <Matrix matrix_id={selectedMatrixId} />
-              <MatrixInput matrix_id={selectedMatrixId} />
+              {matrices.loading ? (
+                '[ m matrices load ]'
+              ) : (
+                <For each={matrices.result || []}>
+                  {(matrix) => (
+                    <div
+                      class={styles['matrix-row']}
+                      onClick={handleMatrixSelect(matrix.matrix_id)}
+                    >
+                      {matrix.matrix_name} [{matrix.matrix_id}]
+                    </div>
+                  )}
+                </For>
+              )}
             </div>
           )}
-        </Show>
-      </Transition>
-    </>
+        </Transition>
+      </Grid>
+      <Grid full>
+        {selectedMatrixId() ? (
+          <MatrixInput matrix_id={selectedMatrixId} />
+        ) : (
+          <Boxed>
+            <Input
+              type="text"
+              label="Insert new matrix"
+              placeholder="Matrix name"
+              onInput={handleInput}
+              onKeyDown={handleKeyDown}
+            />
+          </Boxed>
+        )}
+      </Grid>
+    </Grid>
   )
 }
 

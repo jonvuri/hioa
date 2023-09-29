@@ -17,7 +17,7 @@ const App: Component = () => {
 
   return (
     <Main>
-      <LayoutGrid>
+      <LayoutGrid class={styles['app-container']} row_template="auto 1fr">
         {initialized.loading ? (
           <div>[ init .. ]</div>
         ) : initialized.error ? (
@@ -29,10 +29,7 @@ const App: Component = () => {
                 <ContrastHeader>Root Matrix</ContrastHeader>
               </Tagged>
             </Grid>
-            <Grid full></Grid>
-            <Grid full>
-              <RootMatrix />
-            </Grid>
+            <RootMatrix />
           </>
         )}
       </LayoutGrid>
