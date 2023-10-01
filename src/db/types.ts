@@ -4,7 +4,10 @@ type Sql = string
 export type ClientMessage =
   | {
       type: 'query'
-      payload: string
+      payload: {
+        sql: Sql
+        bindParams?: (string | number)[]
+      }
     }
   | {
       type: 'subscribe'

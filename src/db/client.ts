@@ -89,10 +89,16 @@ promiseWorker.register((msg) => {
 
 export type ExecResults = Record<string, unknown>[]
 
-export const execSql = async (sql: string): Promise<ExecResults> => {
+export const execSql = async (
+  sql: string,
+  bindParams?: unknown[],
+): Promise<ExecResults> => {
   return promiseWorker.postMessage({
     type: 'query',
-    payload: sql,
+    payload: {
+      sql,
+      bindParams,
+    },
   } as ClientMessage)
 }
 

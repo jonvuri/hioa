@@ -107,7 +107,8 @@ promiseWorker.register(async (msg: unknown) => {
     case 'query':
       try {
         return db.exec({
-          sql: message.payload,
+          sql: message.payload.sql,
+          bind: message.payload.bindParams,
           returnValue: 'resultRows',
           rowMode: 'object',
         })

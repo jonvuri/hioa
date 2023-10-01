@@ -129,7 +129,7 @@ export const addMatrixColumn = (
 
     -- Add the column to the matrix table
     ALTER TABLE ${matrix_id}
-    ADD ${column_name} ${column_type};
+    ADD ${column_id} ${column_type};
 
     -- Update the column definitions in the harmonics table
     UPDATE __MatrixHarmonics
@@ -150,3 +150,16 @@ export const addMatrixColumn = (
     COMMIT;
   `)
 }
+
+export const insertRow = (matrix_id: string, column_ids: string[], values: unknown[]) =>
+  execSql(
+    `
+      INSERT INTO ${matrix_id} (
+        ${column_ids.join(', ')}
+      )
+      VALUES (
+        ${column_ids.map(() => '?').join(', ')}
+      );
+    `,
+    values,
+  )
