@@ -50,6 +50,20 @@ export const createMatrix = (name: string) => {
   `)
 }
 
+export const deleteMatrix = (matrix_id: string) =>
+  execSql(`
+    BEGIN;
+
+    -- Delete the matrix table
+    DROP TABLE ${matrix_id};
+
+    -- Delete the matrix entry from the harmonics table
+    DELETE FROM __MatrixHarmonics
+    WHERE matrix_id = '${matrix_id}';
+
+    COMMIT;
+  `)
+
 export const listMatrices = () =>
   subscribeSql<{ matrix_id: string; matrix_name: string }[]>(
     () => `

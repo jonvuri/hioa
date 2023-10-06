@@ -24,6 +24,7 @@
     "vite-plugin-solid": "^2.7.0"
   },
   "dependencies": {
+    "@lutaok/solid-modal": "^0.1.1",
     "@sqlite.org/sqlite-wasm": "3.43.0-build3",
     "on-change": "^4.0.2",
     "promise-worker-bi": "^4.1.1",

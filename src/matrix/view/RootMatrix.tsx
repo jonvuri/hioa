@@ -25,11 +25,8 @@ const RootMatrix: Component = () => {
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') {
       createMatrix(newMatrixName())
+      setNewMatrixName('')
     }
-  }
-
-  const handleMatrixSelect = (matrixId: string) => () => {
-    setSelectedMatrixId(matrixId)
   }
 
   return (
@@ -37,7 +34,10 @@ const RootMatrix: Component = () => {
       <Grid full>
         <Transition name="matrix-fade">
           {selectedMatrixId() ? (
-            <Matrix matrix_id={selectedMatrixId} />
+            <Matrix
+              matrix_id={selectedMatrixId}
+              onClose={() => setSelectedMatrixId('')}
+            />
           ) : (
             <div>
               {matrices.loading ? (
@@ -47,7 +47,7 @@ const RootMatrix: Component = () => {
                   {(matrix) => (
                     <div
                       class={styles['matrix-row']}
-                      onClick={handleMatrixSelect(matrix.matrix_id)}
+                      onClick={() => setSelectedMatrixId(matrix.matrix_id)}
                     >
                       {matrix.matrix_name} [{matrix.matrix_id}]
                     </div>
@@ -69,6 +69,7 @@ const RootMatrix: Component = () => {
               placeholder="Matrix name"
               onInput={handleInput}
               onKeyDown={handleKeyDown}
+              value={newMatrixName()}
             />
           </Boxed>
         )}

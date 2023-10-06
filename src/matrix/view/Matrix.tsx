@@ -1,19 +1,32 @@
-import { Accessor, Component, Show } from 'solid-js'
+import { Accessor, Component, Show, createSignal } from 'solid-js'
+import Modal from '@lutaok/solid-modal'
 import Table from 'solid-surfaces/components/Table'
 import { Transition } from 'solid-transition-group'
 
-import { getMatrixHarmonics, getMatrix } from '../harmonizer'
+import Button from 'solid-surfaces/components/Button'
+import Lined from 'solid-surfaces/components/stellation/Lined'
+import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { Header } from 'solid-surfaces/components/typo/Header'
+
+import { getMatrixHarmonics, getMatrix, deleteMatrix } from '../harmonizer'
 
 import styles from './Matrix.module.sass'
 
 type MatrixProps = {
   matrix_id: Accessor<string>
+  onClose: () => void
 }
 
 const Matrix: Component<MatrixProps> = (props) => {
-  const harmonics = getMatrixHarmonics(props.matrix_id)
+  const [isModalOpen, setIsModalOpen] = createSignal(false)
 
+  const handleDelete = () => {
+    setIsModalOpen(false)
+    deleteMatrix(props.matrix_id())
+    props.onClose()
+  }
+
+  const harmonics = getMatrixHarmonics(props.matrix_id)
   const matrixStore = getMatrix(props.matrix_id)
 
   type ColumnDefinition = {
@@ -44,7 +57,35 @@ const Matrix: Component<MatrixProps> = (props) => {
           }
         >
           <div class={styles.container}>
-            <Header>{name()}</Header> [{props.matrix_id()}]
+            <Lined>
+              <div class={styles['header-container']}>
+                <div style={{ display: 'flex' }}>
+                  <Header margin={false}>{name()}</Header>{' '}
+                  <Dimmed>[{props.matrix_id()}]</Dimmed>
+                </div>
+                <Button onClick={() => setIsModalOpen(true)}>
+                  <span style={{ color: 'red' }}>!</span> delete
+                </Button>
+                <Modal
+                  isOpen={isModalOpen()}
+                  onCloseRequest={() => setIsModalOpen(false)}
+                  closeOnOutsideClick
+                  contentClass={styles['modal-content']}
+                  overlayClass={styles['modal-overlay']}
+                >
+                  <div>Are you sure you want to delete [{name()}]?</div>
+                  <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
+                  <Button
+                    onClick={() => {
+                      setIsModalOpen(false)
+                      handleDelete()
+                    }}
+                  >
+                    Delete
+                  </Button>
+                </Modal>
+              </div>
+            </Lined>
             <Table columns={columnSpecs()} data={matrixStore.result!} />
           </div>
         </Show>

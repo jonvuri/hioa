@@ -138,16 +138,11 @@ export const subscribeSql = <Result>(sql: () => string) => {
   createMemo(() => {
     // TODO: Error handling
     const listener = ((rows: unknown) => {
-      setStore(
-        reconcile(
-          {
-            result: rows as Result,
-            loading: false,
-            error: null,
-          },
-          { key: 'rowid' },
-        ),
-      )
+      setStore({
+        loading: false,
+        error: null,
+      })
+      setStore('result', reconcile(rows as Result, { key: 'rowid' }))
     }) as ListenerCallback
 
     addListener(sql(), listener)
