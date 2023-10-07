@@ -5,7 +5,7 @@ import { Transition } from 'solid-transition-group'
 import { createMatrix, listMatrices } from '../harmonizer'
 
 import Matrix from './Matrix'
-import MatrixInput from './MatrixInput'
+import RowInput from './RowInput'
 
 import styles from './RootMatrix.module.sass'
 import { Grid } from 'solid-surfaces/components/Grid'
@@ -60,7 +60,7 @@ const RootMatrix: Component = () => {
       </Grid>
       <Grid full>
         {selectedMatrixId() ? (
-          <MatrixInput matrix_id={selectedMatrixId} />
+          <RowInput matrix_id={selectedMatrixId} />
         ) : (
           <Boxed>
             <Input

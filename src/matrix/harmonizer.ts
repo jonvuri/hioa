@@ -3,6 +3,8 @@ import { createStore } from 'solid-js/store'
 
 import { execSql, subscribeSql, Store } from '../db/client'
 
+export const ROW_ID_COLUMN_NAME = '__row_id'
+
 export enum ColumnType {
   Text = 'TEXT',
   Number = 'REAL',
@@ -43,7 +45,7 @@ export const createMatrix = (name: string) => {
 
     -- Create the matrix table
     CREATE TABLE IF NOT EXISTS ${matrix_id} (
-      row_id INTEGER PRIMARY KEY
+      ${ROW_ID_COLUMN_NAME} INTEGER PRIMARY KEY
     );
 
     COMMIT;
@@ -176,4 +178,19 @@ export const insertRow = (matrix_id: string, column_ids: string[], values: unkno
       );
     `,
     values,
+  )
+
+export const updateRow = (
+  matrix_id: string,
+  row_id: string,
+  column_id: string,
+  value: unknown,
+) =>
+  execSql(
+    `
+      UPDATE ${matrix_id}
+      SET ${column_id} = ?
+      WHERE ${ROW_ID_COLUMN_NAME} = ?;
+    `,
+    [value, row_id],
   )

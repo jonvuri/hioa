@@ -1,14 +1,21 @@
-import { Accessor, Component, Show, createSignal } from 'solid-js'
-import Modal from '@lutaok/solid-modal'
+import { Accessor, Component, Show, createSelector, createSignal } from 'solid-js'
 import Table from 'solid-surfaces/components/Table'
 import { Transition } from 'solid-transition-group'
 
-import Button from 'solid-surfaces/components/Button'
+import Boxed from 'solid-surfaces/components/stellation/Boxed'
 import Lined from 'solid-surfaces/components/stellation/Lined'
 import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { Header } from 'solid-surfaces/components/typo/Header'
 
-import { getMatrixHarmonics, getMatrix, deleteMatrix } from '../harmonizer'
+import CellInput from './CellInput'
+import DeleteMatrix from './DeleteMatrix'
+
+import {
+  getMatrixHarmonics,
+  getMatrix,
+  updateRow,
+  ROW_ID_COLUMN_NAME,
+} from '../harmonizer'
 
 import styles from './Matrix.module.sass'
 
@@ -18,12 +25,16 @@ type MatrixProps = {
 }
 
 const Matrix: Component<MatrixProps> = (props) => {
-  const [isModalOpen, setIsModalOpen] = createSignal(false)
+  const [editingCellRowId, setEditingCellRowId] = createSignal<string | null>(null)
+  const isCellRowSelected = createSelector(editingCellRowId)
 
-  const handleDelete = () => {
-    setIsModalOpen(false)
-    deleteMatrix(props.matrix_id())
-    props.onClose()
+  const [editingCellColumnKey, setEditingCellColumnKey] = createSignal<string | null>(
+    null,
+  )
+  const isCellColumnSelected = createSelector(editingCellColumnKey)
+
+  const handleSetCell = (rowId: string, columnId: string, value: string) => {
+    updateRow(props.matrix_id(), rowId, columnId, value)
   }
 
   const harmonics = getMatrixHarmonics(props.matrix_id)
@@ -63,30 +74,40 @@ const Matrix: Component<MatrixProps> = (props) => {
                   <Header margin={false}>{name()}</Header>{' '}
                   <Dimmed>[{props.matrix_id()}]</Dimmed>
                 </div>
-                <Button onClick={() => setIsModalOpen(true)}>
-                  <span style={{ color: 'red' }}>!</span> delete
-                </Button>
-                <Modal
-                  isOpen={isModalOpen()}
-                  onCloseRequest={() => setIsModalOpen(false)}
-                  closeOnOutsideClick
-                  contentClass={styles['modal-content']}
-                  overlayClass={styles['modal-overlay']}
-                >
-                  <div>Are you sure you want to delete [{name()}]?</div>
-                  <Button onClick={() => setIsModalOpen(false)}>Cancel</Button>
-                  <Button
-                    onClick={() => {
-                      setIsModalOpen(false)
-                      handleDelete()
-                    }}
-                  >
-                    Delete
-                  </Button>
-                </Modal>
+                <DeleteMatrix matrix_id={props.matrix_id} onClose={props.onClose} />
               </div>
             </Lined>
-            <Table columns={columnSpecs()} data={matrixStore.result!} />
+            <Table
+              columns={columnSpecs()}
+              data={matrixStore.result!}
+              rowKey={ROW_ID_COLUMN_NAME}
+              cellRenderer={(cell, column, rowId) => {
+                const editing =
+                  isCellRowSelected(rowId) && isCellColumnSelected(column.key)
+                return editing ? (
+                  <Boxed>
+                    <CellInput
+                      value={String(cell)}
+                      onCommit={(value) => handleSetCell(rowId, column.key, value)}
+                      onClose={() => {
+                        setEditingCellRowId(null)
+                        setEditingCellColumnKey(null)
+                      }}
+                    />
+                  </Boxed>
+                ) : (
+                  <Boxed
+                    classList={{ [styles.cell]: true }}
+                    onClick={() => {
+                      setEditingCellRowId(rowId)
+                      setEditingCellColumnKey(column.key)
+                    }}
+                  >
+                    {cell}
+                  </Boxed>
+                )
+              }}
+            />
           </div>
         </Show>
       </Show>

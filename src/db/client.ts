@@ -15,7 +15,10 @@ type Listener = {
   sql: Sql
   listener: ListenerCallback
 }
+
 const listeners: Listener[] = []
+
+const resultCache: Record<Sql, unknown[]> = {}
 
 const addListener = (sql: Sql, listener: ListenerCallback) => {
   for (const { sql: existingSql, listener: existingListener } of listeners) {
@@ -23,8 +26,14 @@ const addListener = (sql: Sql, listener: ListenerCallback) => {
       if (listener === existingListener) {
         return
       } else {
-        // Already subscribed to this sql, so just add listener
+        // Already subscribed to this sql, so just add listener without subscribing,
+        // and also immediately send it the cached result if any
         listeners.push({ sql, listener })
+
+        const cachedResult = resultCache[sql]
+        if (cachedResult) {
+          listener(cachedResult)
+        }
         return
       }
     }
@@ -55,19 +64,26 @@ const removeListener = (listener: ListenerCallback) => {
     }
   }
 
-  // No listeners for this sql anymore, so unsubscribe
+  // No listeners for this sql anymore, so unsubscribe and clear the cache
   promiseWorker.postMessage({ type: 'unsubscribe', payload: sql } as ClientMessage)
+  delete resultCache[sql]
+}
+
+const notifyListeners = (sql: Sql, rows: unknown[]) => {
+  for (const { sql: existingSql, listener } of listeners) {
+    if (sql === existingSql) {
+      listener(rows)
+    }
+  }
+
+  resultCache[sql] = rows
 }
 
 promiseWorker.register((msg) => {
   const message = msg as unknown as WorkerMessage
   switch (message.type) {
     case 'subscribed-query-result':
-      for (const { sql, listener } of listeners) {
-        if (sql === message.payload.sql) {
-          listener(message.payload.rows)
-        }
-      }
+      notifyListeners(message.payload.sql, message.payload.rows)
       break
     case 'subscribed-query-error':
       console.error(
@@ -148,7 +164,6 @@ export const subscribeSql = <Result>(sql: () => string) => {
     addListener(sql(), listener)
 
     onCleanup(() => {
-      console.log('Subscribe removing listener')
       removeListener(listener)
     })
   })

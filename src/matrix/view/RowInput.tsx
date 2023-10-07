@@ -8,13 +8,13 @@ import { getMatrixHarmonics, insertRow } from '../harmonizer'
 
 import NewColumnInput from './NewColumnInput'
 
-import styles from './MatrixInput.module.sass'
+import styles from './RowInput.module.sass'
 
-type MatrixInputProps = {
+type RowInputProps = {
   matrix_id: Accessor<string>
 }
 
-const MatrixInput: Component<MatrixInputProps> = (props) => {
+const RowInput: Component<RowInputProps> = (props) => {
   const harmonics = getMatrixHarmonics(props.matrix_id)
 
   const [inputs, setInputs] = createSignal<Record<string, string> | null>(null)
@@ -99,4 +99,4 @@ const MatrixInput: Component<MatrixInputProps> = (props) => {
   )
 }
 
-export default MatrixInput
+export default RowInput
