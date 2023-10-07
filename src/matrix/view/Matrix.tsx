@@ -1,5 +1,4 @@
 import { Accessor, Component, Show, createSelector, createSignal } from 'solid-js'
-import Table from 'solid-surfaces/components/Table'
 import { Transition } from 'solid-transition-group'
 
 import Boxed from 'solid-surfaces/components/stellation/Boxed'
@@ -9,6 +8,7 @@ import { Header } from 'solid-surfaces/components/typo/Header'
 
 import CellInput from './CellInput'
 import DeleteMatrix from './DeleteMatrix'
+import MatrixTable from './MatrixTable'
 
 import {
   getMatrixHarmonics,
@@ -77,7 +77,7 @@ const Matrix: Component<MatrixProps> = (props) => {
                 <DeleteMatrix matrix_id={props.matrix_id} onClose={props.onClose} />
               </div>
             </Lined>
-            <Table
+            <MatrixTable
               columns={columnSpecs()}
               data={matrixStore.result!}
               rowKey={ROW_ID_COLUMN_NAME}
