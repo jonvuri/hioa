@@ -14,9 +14,9 @@ type MatrixProps = {
 const Matrix: Component<MatrixProps> = (props) => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = createSignal(false)
 
-  const harmonics = getMatrixHarmonics(props.matrix_id)
+  const [harmonicsRows] = getMatrixHarmonics(props.matrix_id)
 
-  const name = () => harmonics?.result?.matrix_name
+  const name = () => harmonicsRows()?.matrix_name
 
   const handleDelete = () => {
     setIsDeleteModalOpen(false)

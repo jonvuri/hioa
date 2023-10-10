@@ -1,10 +1,9 @@
-import { createStore, reconcile } from 'solid-js/store'
 import { PWBHost } from 'promise-worker-bi'
 
 import DbWorker from './worker?worker'
 
 import { ClientMessage, WorkerMessage } from './types'
-import { createMemo, onCleanup } from 'solid-js'
+import { createMemo, createSignal, onCleanup } from 'solid-js'
 
 const worker = new DbWorker()
 const promiseWorker = new PWBHost(worker)
@@ -142,23 +141,73 @@ export type Store<T> =
       error: string
     }
 
-// Retry doing this with accessor and onCleanup in subscribe itself
-export const subscribeSql = <Result>(sql: () => string) => {
-  // Try using a Signal here instead if this misbehaves
-  const [store, setStore] = createStore<Store<Result>>({
-    result: null,
-    loading: true,
-    error: null,
-  })
+// TODO: Reverify that onCleanup works as expected
+export const subscribeSql = <ResultRow extends Record<string, unknown>>(
+  sql: () => string,
+  idKey: string,
+) => {
+  const [rows, setRows] = createSignal<ResultRow[] | undefined>()
+  const [queryState, setQueryState] = createSignal<{
+    loading: boolean
+    error: Error | null
+  }>({ loading: true, error: null })
+
+  // TODO: Return query meta?
+  // const [meta, setMeta] = createStore<{ columns: string[]; types: string[] }>({
 
   createMemo(() => {
     // TODO: Error handling
-    const listener = ((rows: unknown) => {
-      setStore({
+    const listener = ((newRows: ResultRow[]) => {
+      setQueryState({
         loading: false,
         error: null,
       })
-      setStore('result', reconcile(rows as Result, { key: 'rowid' }))
+
+      setRows((oldRows) => {
+        if (!oldRows) {
+          return newRows
+        }
+
+        const ret = new Array(newRows.length)
+        let changed = false
+
+        for (const index in newRows) {
+          const newRow = newRows[index]
+          const oldRow = oldRows[index]
+
+          if (oldRow) {
+            if (oldRow[idKey] === newRow[idKey]) {
+              let rowChanged = false
+
+              for (const key in newRow) {
+                if (oldRow[key] !== newRow[key]) {
+                  rowChanged = true
+                  break
+                }
+              }
+
+              if (rowChanged) {
+                ret[index] = newRow
+                changed = true
+              } else {
+                ret[index] = oldRow
+              }
+            } else {
+              ret[index] = newRow
+              changed = true
+            }
+          } else {
+            ret[index] = newRow
+            changed = true
+          }
+        }
+
+        if (changed) {
+          return ret
+        } else {
+          return oldRows
+        }
+      })
     }) as ListenerCallback
 
     addListener(sql(), listener)
@@ -168,5 +217,5 @@ export const subscribeSql = <Result>(sql: () => string) => {
     })
   })
 
-  return store
+  return [rows, queryState] as [typeof rows, typeof queryState]
 }

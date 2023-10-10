@@ -1,34 +1,39 @@
-import { createSignal, onMount } from 'solid-js'
+import { createSignal } from 'solid-js'
 import Input from 'solid-surfaces/components/Input'
+
+import styles from './CellInput.module.sass'
 
 type CellInputProps = {
   value: string
   onCommit: (value: string) => void
-  onClose: () => void
 }
 
 const CellInput = (props: CellInputProps) => {
   const [value, setValue] = createSignal(props.value)
+  const [editing, setEditing] = createSignal(false)
 
-  let inputRef: HTMLInputElement | undefined
-
-  onMount(() => {
-    inputRef?.focus()
-  })
+  const reset = () => {
+    setValue(props.value)
+    setEditing(false)
+  }
 
   return (
     <Input
-      ref={inputRef}
+      classList={{ [styles['input']]: true, [styles['editing']]: editing() }}
       value={value()}
+      onFocus={() => {
+        setEditing(true)
+      }}
+      onBlur={reset}
       onInput={(event) => {
         setValue(event.currentTarget.value)
       }}
       onKeyDown={(event) => {
         if (event.key === 'Enter') {
           props.onCommit(value())
-          props.onClose()
+          reset()
         } else if (event.key === 'Escape') {
-          props.onClose()
+          reset()
         }
       }}
     />

@@ -15,7 +15,7 @@ const RootMatrix: Component = () => {
   const [newMatrixName, setNewMatrixName] = createSignal('')
   const [selectedMatrixId, setSelectedMatrixId] = createSignal('')
 
-  const matrices = listMatrices()
+  const [matricesRows, matricesQueryState] = listMatrices()
 
   const handleInput = (e: Event) => {
     const target = e.target as HTMLInputElement
@@ -40,10 +40,10 @@ const RootMatrix: Component = () => {
             />
           ) : (
             <div>
-              {matrices.loading ? (
+              {matricesQueryState().loading ? (
                 '[ m matrices load ]'
               ) : (
-                <For each={matrices.result || []}>
+                <For each={matricesRows() || []}>
                   {(matrix) => (
                     <div
                       class={styles['matrix-row']}

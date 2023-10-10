@@ -15,7 +15,7 @@ type RowInputProps = {
 }
 
 const RowInput: Component<RowInputProps> = (props) => {
-  const harmonics = getMatrixHarmonics(props.matrix_id)
+  const [harmonicsRows, harmonicsQueryState] = getMatrixHarmonics(props.matrix_id)
 
   const [inputs, setInputs] = createSignal<Record<string, string> | null>(null)
 
@@ -25,7 +25,7 @@ const RowInput: Component<RowInputProps> = (props) => {
     if (currentInputs === null) {
       currentInputs = Object.fromEntries(
         // Result will never be null because inputs are hidden till defined
-        harmonics.result!.column_definitions.map((column) => [column.column_id, '']),
+        harmonicsRows()!.column_definitions.map((column) => [column.column_id, '']),
       )
     }
 
@@ -37,7 +37,7 @@ const RowInput: Component<RowInputProps> = (props) => {
 
   const commitInsert = () => {
     if (allValid()) {
-      const column_defs = harmonics.result!.column_definitions
+      const column_defs = harmonicsRows()!.column_definitions
       const column_ids = column_defs.map((column) => column.column_id)
       const values = column_ids.map((column_id) => inputs()?.[column_id])
       insertRow(props.matrix_id(), column_ids, values)
@@ -62,14 +62,14 @@ const RowInput: Component<RowInputProps> = (props) => {
       <Boxed class={styles.container}>
         {allValid() ? 'valid!' : 'invalid'}
         <Show
-          when={!harmonics.loading}
+          when={!harmonicsQueryState().loading}
           fallback={<div>[ m input req .. ] [{props.matrix_id()}]</div>}
         >
           <Show
-            when={harmonics?.result?.column_definitions?.length}
+            when={harmonicsRows()?.column_definitions?.length}
             fallback={<Dimmed>[ no columns yet ]</Dimmed>}
           >
-            <For each={harmonics?.result?.column_definitions}>
+            <For each={harmonicsRows()?.column_definitions}>
               {(column) => (
                 <>
                   [ column valid: {valid(columnInput(column.column_id)) ? 'yes' : 'no'} ]

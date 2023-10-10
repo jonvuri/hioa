@@ -1,7 +1,5 @@
 import { createMemo } from 'solid-js'
-import { createStore } from 'solid-js/store'
-
-import { execSql, subscribeSql, Store } from '../db/client'
+import { execSql, subscribeSql } from '../db/client'
 
 export const ROW_ID_COLUMN_NAME = '__row_id'
 
@@ -67,7 +65,7 @@ export const deleteMatrix = (matrix_id: string) =>
   `)
 
 export const listMatrices = () =>
-  subscribeSql<{ matrix_id: string; matrix_name: string }[]>(
+  subscribeSql<{ matrix_id: string; matrix_name: string }>(
     () => `
       SELECT
         matrix_id,
@@ -75,15 +73,14 @@ export const listMatrices = () =>
       FROM
         __MatrixHarmonics;
     `,
+    ROW_ID_COLUMN_NAME,
   )
 
 export const getMatrixHarmonics = (matrix_id: () => string) => {
-  const subscription = subscribeSql<
-    {
-      matrix_name: string
-      column_definitions: string
-    }[]
-  >(
+  const [rows, queryState] = subscribeSql<{
+    matrix_name: string
+    column_definitions: string
+  }>(
     () => `
       SELECT
         matrix_name,
@@ -93,44 +90,33 @@ export const getMatrixHarmonics = (matrix_id: () => string) => {
       WHERE
         matrix_id = '${matrix_id()}';
     `,
+    'column_definitions',
   )
 
-  const [hydratedHarmonics, setHydratedHarmonics] = createStore<
-    Store<{
-      matrix_name: string
-      column_definitions: ColumnDefinition[]
-    }>
-  >({
-    result: null,
-    loading: true,
-    error: null,
-  })
-
-  createMemo(() => {
-    const harmonics = subscription.result?.[0]
+  const hydratedRows = createMemo(() => {
+    const harmonics = rows()?.[0]
     if (harmonics) {
-      setHydratedHarmonics({
-        result: {
-          matrix_name: harmonics.matrix_name,
-          column_definitions: JSON.parse(harmonics.column_definitions),
-        },
-        loading: false,
-        error: null,
-      })
+      return {
+        matrix_name: harmonics.matrix_name,
+        column_definitions: JSON.parse(
+          harmonics.column_definitions,
+        ) as ColumnDefinition[],
+      }
     }
   })
 
-  return hydratedHarmonics
+  return [hydratedRows, queryState] as [typeof hydratedRows, typeof queryState]
 }
 
 export const getMatrix = (matrix_id: () => string) =>
-  subscribeSql<{ matrix_id: string; matrix_name: string }[]>(
+  subscribeSql<{ matrix_id: string; matrix_name: string }>(
     () => `
       SELECT
         *
       FROM
         ${matrix_id()};
     `,
+    ROW_ID_COLUMN_NAME,
   )
 
 export const addMatrixColumn = (

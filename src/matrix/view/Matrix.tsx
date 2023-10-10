@@ -1,21 +1,14 @@
-import { Accessor, Component, Show, createSelector, createSignal } from 'solid-js'
+import { Accessor, Component, Show, createMemo } from 'solid-js'
 import { Transition } from 'solid-transition-group'
 
-import Boxed from 'solid-surfaces/components/stellation/Boxed'
 import Lined from 'solid-surfaces/components/stellation/Lined'
 import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { Header } from 'solid-surfaces/components/typo/Header'
 
-import CellInput from './CellInput'
 import DeleteMatrix from './DeleteMatrix'
 import MatrixTable from './MatrixTable'
 
-import {
-  getMatrixHarmonics,
-  getMatrix,
-  updateRow,
-  ROW_ID_COLUMN_NAME,
-} from '../harmonizer'
+import { getMatrixHarmonics, getMatrix } from '../harmonizer'
 
 import styles from './Matrix.module.sass'
 
@@ -25,45 +18,34 @@ type MatrixProps = {
 }
 
 const Matrix: Component<MatrixProps> = (props) => {
-  const [editingCellRowId, setEditingCellRowId] = createSignal<string | null>(null)
-  const isCellRowSelected = createSelector(editingCellRowId)
+  const [harmonicsRows, harmonicsQueryState] = getMatrixHarmonics(props.matrix_id)
+  const [matrixRows, matrixQueryState] = getMatrix(props.matrix_id)
 
-  const [editingCellColumnKey, setEditingCellColumnKey] = createSignal<string | null>(
-    null,
+  const name = () => harmonicsRows()?.matrix_name
+
+  const columnSpecs = createMemo(
+    () =>
+      harmonicsRows()?.column_definitions.map((column) => ({
+        key: column.column_id,
+        name: column.column_name,
+      })) || [],
   )
-  const isCellColumnSelected = createSelector(editingCellColumnKey)
 
-  const handleSetCell = (rowId: string, columnId: string, value: string) => {
-    updateRow(props.matrix_id(), rowId, columnId, value)
-  }
-
-  const harmonics = getMatrixHarmonics(props.matrix_id)
-  const matrixStore = getMatrix(props.matrix_id)
-
-  type ColumnDefinition = {
-    column_id: string
-    column_name: string
-  }
-
-  const name = () => harmonics?.result?.matrix_name
-  const columnSpecs = () =>
-    harmonics?.result?.column_definitions.map((column: ColumnDefinition) => ({
-      key: column.column_id,
-      name: column.column_name,
-    })) || []
+  const data = createMemo(() => matrixRows() || [])
 
   return (
     <Transition name="matrix-fade">
       <Show
-        when={!harmonics.loading && !matrixStore.loading}
+        when={!harmonicsQueryState().loading && !matrixQueryState().loading}
         fallback={<div>[ m load matrix .. ] [{props.matrix_id()}]</div>}
       >
         <Show
-          when={!harmonics.error && !matrixStore.error}
+          when={!harmonicsQueryState().error && !matrixQueryState().error}
           fallback={
             <div>
-              [ m load error ! ] [{harmonics.error && ` ${harmonics.error} `}
-              {matrixStore.error && ` ${matrixStore.error} `}]
+              [ m load error ! ] [
+              {harmonicsQueryState().error && ` ${harmonicsQueryState().error} `}
+              {matrixQueryState().error && ` ${matrixQueryState().error} `}]
             </div>
           }
         >
@@ -77,37 +59,13 @@ const Matrix: Component<MatrixProps> = (props) => {
                 <DeleteMatrix matrix_id={props.matrix_id} onClose={props.onClose} />
               </div>
             </Lined>
-            <MatrixTable
-              columns={columnSpecs()}
-              data={matrixStore.result!}
-              rowKey={ROW_ID_COLUMN_NAME}
-              cellRenderer={(cell, column, rowId) => {
-                const editing =
-                  isCellRowSelected(rowId) && isCellColumnSelected(column.key)
-                return editing ? (
-                  <Boxed>
-                    <CellInput
-                      value={String(cell)}
-                      onCommit={(value) => handleSetCell(rowId, column.key, value)}
-                      onClose={() => {
-                        setEditingCellRowId(null)
-                        setEditingCellColumnKey(null)
-                      }}
-                    />
-                  </Boxed>
-                ) : (
-                  <Boxed
-                    classList={{ [styles.cell]: true }}
-                    onClick={() => {
-                      setEditingCellRowId(rowId)
-                      setEditingCellColumnKey(column.key)
-                    }}
-                  >
-                    {cell}
-                  </Boxed>
-                )
-              }}
-            />
+            {data()?.length && (
+              <MatrixTable
+                matrix_id={props.matrix_id}
+                columns={columnSpecs}
+                data={data}
+              />
+            )}
           </div>
         </Show>
       </Show>
