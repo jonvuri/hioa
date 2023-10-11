@@ -1,4 +1,4 @@
-import { Accessor, Component, For, JSX, createMemo } from 'solid-js'
+import { Accessor, Component, For, JSX, createMemo, on } from 'solid-js'
 import {
   flexRender,
   getCoreRowModel,
@@ -7,36 +7,56 @@ import {
   CellContext,
   RowData,
 } from '@tanstack/solid-table'
-import Boxed from 'solid-surfaces/components/stellation/Boxed'
 
-import { updateRow, ROW_ID_COLUMN_NAME } from '../harmonizer'
+import CellInput from './CellInput'
+import CellSelect from './CellSelect'
+import { updateRow, ROW_ID_COLUMN_NAME, deleteRows } from '../harmonizer'
 
 import styles from './MatrixTable.module.sass'
-import CellInput from './CellInput'
 
-type ColumnSpec = {
+export type ColumnSpec = {
   key: string
   name: string
 }
-type ColumnData = string | number | boolean | null | undefined
-type Row = Record<string, ColumnData>
+
+export type RowId = string
+export type ColumnId = string
+
+export type ColumnData = string | number | boolean | null | undefined
+
+export type Row = Record<RowId, ColumnData>
 
 declare module '@tanstack/solid-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TableMeta<TData extends RowData> {
-    updateCell: (rowId: string, columnId: string, value: unknown) => void
+    selection: Record<RowId, boolean>
+    updateCell: (rowId: RowId, columnId: ColumnId, value: unknown) => void
   }
 }
 
-const Cell = (props: CellContext<Row, unknown>) => (
-  <Boxed>
-    <CellInput
-      value={String(props.getValue())}
-      onCommit={(value) => {
-        props.table.options.meta?.updateCell(props.row.id, props.column.id, value)
+const SelectionCell = (props: CellContext<Row, unknown>) => {
+  const selection = props.table.options.meta?.selection
+  return (
+    <CellSelect
+      value={selection?.[props.row.id] || false}
+      onChange={(value) => {
+        if (selection) {
+          selection[props.row.id] = value
+        } else {
+          throw new Error('SelectionCell: selection meta not found')
+        }
       }}
     />
-  </Boxed>
+  )
+}
+
+const DataCell = (props: CellContext<Row, unknown>) => (
+  <CellInput
+    value={String(props.getValue())}
+    onCommit={(value) => {
+      props.table.options.meta?.updateCell(props.row.id, props.column.id, value)
+    }}
+  />
 )
 
 type MatrixTableProps = {
@@ -44,19 +64,19 @@ type MatrixTableProps = {
   columns: Accessor<ColumnSpec[]>
   data: Accessor<Row[]>
   rowKey?: string
-  cellRenderer?: (cell: ColumnData, column: ColumnSpec, id: string) => JSX.Element
-  header?: boolean
 } & JSX.HTMLAttributes<HTMLTableElement>
 
 const MatrixTable: Component<MatrixTableProps> = (props) => {
-  const columnDefs = createMemo(
-    () =>
-      props.columns().map((column) => ({
-        accessorKey: column.key,
-        header: column.name,
-        cell: Cell,
-      })) as ColumnDef<Row>[],
-  )
+  const initialSelection = createMemo(on(props.data, () => ({})))
+
+  const columnDefs = createMemo<ColumnDef<Row>[]>(() => [
+    { header: 'selection', accessorKey: 'selection', cell: SelectionCell },
+    ...props.columns().map((column) => ({
+      accessorKey: column.key,
+      header: column.name,
+      cell: DataCell,
+    })),
+  ])
 
   const table = createMemo(() =>
     createSolidTable({
@@ -67,7 +87,8 @@ const MatrixTable: Component<MatrixTableProps> = (props) => {
       getCoreRowModel: getCoreRowModel(),
       getRowId: (row) => row[props.rowKey || ROW_ID_COLUMN_NAME] as string,
       meta: {
-        updateCell: (rowId: string, columnId: string, value: unknown) => {
+        selection: initialSelection(),
+        updateCell: (rowId: RowId, columnId: ColumnId, value: unknown) => {
           updateRow(props.matrix_id(), rowId, columnId, value)
         },
       },
@@ -75,38 +96,54 @@ const MatrixTable: Component<MatrixTableProps> = (props) => {
   )
 
   return (
-    <table class={styles['table']}>
-      <thead>
-        <For each={table().getHeaderGroups()}>
-          {(headerGroup) => (
-            <tr>
-              <For each={headerGroup.headers}>
-                {(header) => (
-                  <th>
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(header.column.columnDef.header, header.getContext())}
-                  </th>
-                )}
-              </For>
-            </tr>
-          )}
-        </For>
-      </thead>
-      <tbody>
-        <For each={table().getRowModel().rows}>
-          {(row) => (
-            <tr>
-              <For each={row.getVisibleCells()}>
-                {(cell) => (
-                  <td>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                )}
-              </For>
-            </tr>
-          )}
-        </For>
-      </tbody>
-    </table>
+    <>
+      <button
+        onClick={() => {
+          const selection = table().options.meta?.selection
+
+          if (selection) {
+            const ids = Object.keys(selection).filter((id) => selection[id])
+            deleteRows(props.matrix_id(), ids)
+          } else {
+            throw new Error('SelectionCell: selection meta not found')
+          }
+        }}
+      >
+        Delete
+      </button>
+      <table class={styles['table']}>
+        <thead>
+          <For each={table().getHeaderGroups()}>
+            {(headerGroup) => (
+              <tr>
+                <For each={headerGroup.headers}>
+                  {(header) => (
+                    <th>
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(header.column.columnDef.header, header.getContext())}
+                    </th>
+                  )}
+                </For>
+              </tr>
+            )}
+          </For>
+        </thead>
+        <tbody>
+          <For each={table().getRowModel().rows}>
+            {(row) => (
+              <tr>
+                <For each={row.getVisibleCells()}>
+                  {(cell) => (
+                    <td>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                  )}
+                </For>
+              </tr>
+            )}
+          </For>
+        </tbody>
+      </table>
+    </>
   )
 }
 

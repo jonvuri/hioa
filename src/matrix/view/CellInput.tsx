@@ -1,6 +1,8 @@
 import { createSignal } from 'solid-js'
 import Input from 'solid-surfaces/components/Input'
+import Boxed from 'solid-surfaces/components/stellation/Boxed'
 
+import cellStyles from './Cell.module.sass'
 import styles from './CellInput.module.sass'
 
 type CellInputProps = {
@@ -18,25 +20,27 @@ const CellInput = (props: CellInputProps) => {
   }
 
   return (
-    <Input
-      classList={{ [styles['input']]: true, [styles['editing']]: editing() }}
-      value={value()}
-      onFocus={() => {
-        setEditing(true)
-      }}
-      onBlur={reset}
-      onInput={(event) => {
-        setValue(event.currentTarget.value)
-      }}
-      onKeyDown={(event) => {
-        if (event.key === 'Enter') {
-          props.onCommit(value())
-          reset()
-        } else if (event.key === 'Escape') {
-          reset()
-        }
-      }}
-    />
+    <Boxed classList={{ [cellStyles['cell']]: true }}>
+      <Input
+        classList={{ [styles['input']]: true, [styles['editing']]: editing() }}
+        value={value()}
+        onFocus={() => {
+          setEditing(true)
+        }}
+        onBlur={reset}
+        onInput={(event) => {
+          setValue(event.currentTarget.value)
+        }}
+        onKeyDown={(event) => {
+          if (event.key === 'Enter') {
+            props.onCommit(value())
+            reset()
+          } else if (event.key === 'Escape') {
+            reset()
+          }
+        }}
+      />
+    </Boxed>
   )
 }
 

@@ -1,15 +1,25 @@
 .table
   width: max-content
-  border-spacing: 8px
+  height: 1px
+  border-collapse: collapse
+
+  tr
+    height: 100%
+    background-image: repeating-linear-gradient(240deg, #111, #111 10px, transparent 10px, transparent 40px, #111 40px)
+    background-size: 100% 3px
+    background-position: 0 100%
+    background-repeat: no-repeat
 
   th, td
-    min-width: 8rem
-    text-align: left
-        // For a more classic horizontally bordered table, remove Boxed and uncomment:  
-        // border-bottom: 1px solid var(--text-color)
+    height: 100%
+    min-width: 4rem
+    padding: 4px
 
     th:first-child, td:first-child
       padding-left: 0
 
     th:last-child, td:last-child
       padding-right: 0
+
+    > div
+      height: 100%

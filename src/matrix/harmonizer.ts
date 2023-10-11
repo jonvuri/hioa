@@ -180,3 +180,21 @@ export const updateRow = (
     `,
     [value, row_id],
   )
+
+export const deleteRow = (matrix_id: string, row_id: string) =>
+  execSql(
+    `
+      DELETE FROM ${matrix_id}
+      WHERE ${ROW_ID_COLUMN_NAME} = ?;
+    `,
+    [row_id],
+  )
+
+export const deleteRows = (matrix_id: string, row_ids: string[]) =>
+  execSql(
+    `
+      DELETE FROM ${matrix_id}
+      WHERE ${ROW_ID_COLUMN_NAME} IN (${row_ids.map(() => '?').join(', ')});
+    `,
+    row_ids,
+  )
