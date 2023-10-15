@@ -1,5 +1,7 @@
 import { createMemo } from 'solid-js'
+
 import { execSql, subscribeSql } from '../db/client'
+import { Row } from './types'
 
 export const ROW_ID_COLUMN_NAME = '__row_id'
 
@@ -109,7 +111,7 @@ export const getMatrixHarmonics = (matrix_id: () => string) => {
 }
 
 export const getMatrix = (matrix_id: () => string) =>
-  subscribeSql<{ matrix_id: string; matrix_name: string }>(
+  subscribeSql<Row>(
     () => `
       SELECT
         *

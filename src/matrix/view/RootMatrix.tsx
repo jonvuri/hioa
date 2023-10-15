@@ -1,19 +1,21 @@
 import { Component, For, createSignal } from 'solid-js'
-import Input from 'solid-surfaces/components/Input'
 import { Transition } from 'solid-transition-group'
+import Input from 'solid-surfaces/components/Input'
+import { Grid } from 'solid-surfaces/components/Grid'
+import Boxed from 'solid-surfaces/components/stellation/Boxed'
+import Tagged from 'solid-surfaces/components/stellation/Tagged'
+import { ContrastHeader } from 'solid-surfaces/components/typo/Header'
 
 import { createMatrix, listMatrices } from '../harmonizer'
 
-import Matrix from './Matrix'
-import RowInput from './RowInput'
-
 import styles from './RootMatrix.module.sass'
-import { Grid } from 'solid-surfaces/components/Grid'
-import Boxed from 'solid-surfaces/components/stellation/Boxed'
 
-const RootMatrix: Component = () => {
+type RootMatrixProps = {
+  onSelectMatrix: (matrix_id: string) => void
+}
+
+const RootMatrix: Component<RootMatrixProps> = (props) => {
   const [newMatrixName, setNewMatrixName] = createSignal('')
-  const [selectedMatrixId, setSelectedMatrixId] = createSignal('')
 
   const [matricesRows, matricesQueryState] = listMatrices()
 
@@ -30,15 +32,15 @@ const RootMatrix: Component = () => {
   }
 
   return (
-    <Grid full subgrid row_template="1fr auto">
-      <Grid full>
-        <Transition name="matrix-fade">
-          {selectedMatrixId() ? (
-            <Matrix
-              matrix_id={selectedMatrixId}
-              onClose={() => setSelectedMatrixId('')}
-            />
-          ) : (
+    <>
+      <Grid full class={styles['main-header']}>
+        <Tagged bottom>
+          <ContrastHeader>Root Matrix</ContrastHeader>
+        </Tagged>
+      </Grid>
+      <Grid full subgrid row_template="1fr auto">
+        <Grid full>
+          <Transition name="matrix-fade">
             <div>
               {matricesQueryState().loading ? (
                 '[ m matrices load ]'
@@ -47,7 +49,7 @@ const RootMatrix: Component = () => {
                   {(matrix) => (
                     <div
                       class={styles['matrix-row']}
-                      onClick={() => setSelectedMatrixId(matrix.matrix_id)}
+                      onClick={() => props.onSelectMatrix(matrix.matrix_id)}
                     >
                       {matrix.matrix_name} [{matrix.matrix_id}]
                     </div>
@@ -55,13 +57,9 @@ const RootMatrix: Component = () => {
                 </For>
               )}
             </div>
-          )}
-        </Transition>
-      </Grid>
-      <Grid full>
-        {selectedMatrixId() ? (
-          <RowInput matrix_id={selectedMatrixId} />
-        ) : (
+          </Transition>
+        </Grid>
+        <Grid full>
           <Boxed>
             <Input
               type="text"
@@ -72,9 +70,9 @@ const RootMatrix: Component = () => {
               value={newMatrixName()}
             />
           </Boxed>
-        )}
+        </Grid>
       </Grid>
-    </Grid>
+    </>
   )
 }
 

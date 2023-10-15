@@ -13,18 +13,12 @@ import CellSelect from './CellSelect'
 import { updateRow, ROW_ID_COLUMN_NAME, deleteRows } from '../harmonizer'
 
 import styles from './MatrixTable.module.sass'
+import { Row, RowId, ColumnId } from '../types'
 
-export type ColumnSpec = {
+type ColumnSpec = {
   key: string
   name: string
 }
-
-export type RowId = string
-export type ColumnId = string
-
-export type ColumnData = string | number | boolean | null | undefined
-
-export type Row = Record<RowId, ColumnData>
 
 declare module '@tanstack/solid-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
