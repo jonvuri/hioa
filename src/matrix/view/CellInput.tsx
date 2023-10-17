@@ -11,6 +11,7 @@ type CellInputProps = {
 }
 
 const CellInput = (props: CellInputProps) => {
+  let inputRef: HTMLInputElement
   const [value, setValue] = createSignal(props.value)
   const [editing, setEditing] = createSignal(false)
 
@@ -20,8 +21,14 @@ const CellInput = (props: CellInputProps) => {
   }
 
   return (
-    <Boxed classList={{ [cellStyles['cell']]: true }}>
+    <Boxed
+      classList={{ [cellStyles['cell']]: true, [styles['cell-container']]: true }}
+      onClick={() => {
+        inputRef.focus()
+      }}
+    >
       <Input
+        ref={inputRef!}
         classList={{ [styles['input']]: true, [styles['editing']]: editing() }}
         value={value()}
         onFocus={() => {
