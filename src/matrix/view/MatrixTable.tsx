@@ -1,4 +1,4 @@
-import { Accessor, Component, For, JSX, createMemo, on } from 'solid-js'
+import { Accessor, Component, For, JSX, createMemo } from 'solid-js'
 import {
   flexRender,
   getCoreRowModel,
@@ -10,10 +10,11 @@ import {
 
 import CellInput from './CellInput'
 import CellSelect from './CellSelect'
+import { RowSelection } from './selection'
 import { updateRow, ROW_ID_COLUMN_NAME, deleteRows } from '../harmonizer'
+import { Row, RowId, ColumnId } from '../types'
 
 import styles from './MatrixTable.module.sass'
-import { Row, RowId, ColumnId } from '../types'
 
 type ColumnSpec = {
   key: string
@@ -23,21 +24,23 @@ type ColumnSpec = {
 declare module '@tanstack/solid-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TableMeta<TData extends RowData> {
-    selection: Record<RowId, boolean>
+    rowSelection: RowSelection
+    selectRow: (rowId: RowId) => void
+    deselectRow: (rowId: RowId) => void
     updateCell: (rowId: RowId, columnId: ColumnId, value: unknown) => void
   }
 }
 
 const SelectionCell = (props: CellContext<Row, unknown>) => {
-  const selection = props.table.options.meta?.selection
+  const selection = props.table.options.meta?.rowSelection?.()
   return (
     <CellSelect
       value={selection?.[props.row.id] || false}
       onChange={(value) => {
-        if (selection) {
-          selection[props.row.id] = value
+        if (value) {
+          props.table.options.meta?.selectRow(props.row.id)
         } else {
-          throw new Error('SelectionCell: selection meta not found')
+          props.table.options.meta?.deselectRow(props.row.id)
         }
       }}
     />
@@ -57,12 +60,13 @@ type MatrixTableProps = {
   matrix_id: Accessor<string>
   columns: Accessor<ColumnSpec[]>
   data: Accessor<Row[]>
+  rowSelection: RowSelection
+  selectRow: (rowId: RowId) => void
+  deselectRow: (rowId: RowId) => void
   rowKey?: string
 } & JSX.HTMLAttributes<HTMLTableElement>
 
 const MatrixTable: Component<MatrixTableProps> = (props) => {
-  const initialSelection = createMemo(on(props.data, () => ({})))
-
   const columnDefs = createMemo<ColumnDef<Row>[]>(() => [
     { header: 'selection', accessorKey: 'selection', cell: SelectionCell },
     ...props.columns().map((column) => ({
@@ -81,7 +85,9 @@ const MatrixTable: Component<MatrixTableProps> = (props) => {
       getCoreRowModel: getCoreRowModel(),
       getRowId: (row) => row[props.rowKey || ROW_ID_COLUMN_NAME] as string,
       meta: {
-        selection: initialSelection(),
+        rowSelection: props.rowSelection,
+        selectRow: props.selectRow,
+        deselectRow: props.deselectRow,
         updateCell: (rowId: RowId, columnId: ColumnId, value: unknown) => {
           updateRow(props.matrix_id(), rowId, columnId, value)
         },
@@ -93,7 +99,7 @@ const MatrixTable: Component<MatrixTableProps> = (props) => {
     <>
       <button
         onClick={() => {
-          const selection = table().options.meta?.selection
+          const selection = table().options.meta?.rowSelection?.()
 
           if (selection) {
             const ids = Object.keys(selection).filter((id) => selection[id])

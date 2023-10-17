@@ -1,19 +1,20 @@
 import { Accessor, Component, Show, createMemo } from 'solid-js'
 import { Transition } from 'solid-transition-group'
 
+import Button from 'solid-surfaces/components/Button'
+import { Grid } from 'solid-surfaces/components/Grid'
 import Lined from 'solid-surfaces/components/stellation/Lined'
+import Tagged from 'solid-surfaces/components/stellation/Tagged'
 import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { ContrastHeader, Header } from 'solid-surfaces/components/typo/Header'
 
 import DeleteMatrix from './DeleteMatrix'
 import MatrixTable from './MatrixTable'
+import RowInput from './RowInput'
+import { useRowSelection } from './selection'
 import { getMatrixHarmonics, getMatrix } from '../harmonizer'
 
 import styles from './Matrix.module.sass'
-import { Grid } from 'solid-surfaces/components/Grid'
-import Tagged from 'solid-surfaces/components/stellation/Tagged'
-import RowInput from './RowInput'
-import Button from 'solid-surfaces/components/Button'
 
 type MatrixProps = {
   matrix_id: Accessor<string>
@@ -36,12 +37,14 @@ const Matrix: Component<MatrixProps> = (props) => {
 
   const data = createMemo(() => matrixRows() || [])
 
+  const [rowSelection, selectRow, deselectRow] = useRowSelection(data)
+
   return (
     <>
       <Grid full class={styles['main-header']}>
         <div style={{ display: 'flex' }}>
           <Tagged bottom>
-            <ContrastHeader>{harmonicsRows()?.matrix_name}</ContrastHeader>
+            <ContrastHeader>Root Matrix</ContrastHeader>
           </Tagged>
           <Button onClick={props.onClose}>Close</Button>
         </div>
@@ -78,6 +81,9 @@ const Matrix: Component<MatrixProps> = (props) => {
                       matrix_id={props.matrix_id}
                       columns={columnSpecs}
                       data={data}
+                      rowSelection={rowSelection}
+                      selectRow={selectRow}
+                      deselectRow={deselectRow}
                     />
                   )}
                 </div>
@@ -86,7 +92,7 @@ const Matrix: Component<MatrixProps> = (props) => {
           </Transition>
         </Grid>
         <Grid full>
-          <RowInput matrix_id={props.matrix_id} />
+          <RowInput matrix_id={props.matrix_id} rowSelection={rowSelection} />
         </Grid>
       </Grid>
     </>

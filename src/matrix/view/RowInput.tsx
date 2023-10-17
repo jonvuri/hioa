@@ -7,11 +7,13 @@ import { Transition } from 'solid-transition-group'
 import { getMatrixHarmonics, insertRow } from '../harmonizer'
 
 import NewColumnInput from './NewColumnInput'
+import { RowSelection } from './selection'
 
 import styles from './RowInput.module.sass'
 
 type RowInputProps = {
   matrix_id: Accessor<string>
+  rowSelection: RowSelection
 }
 
 const RowInput: Component<RowInputProps> = (props) => {
@@ -57,9 +59,12 @@ const RowInput: Component<RowInputProps> = (props) => {
     return currentInputs !== null && Object.values(currentInputs).every(valid)
   }
 
+  const selectionLength = () => Object.keys(props.rowSelection()).length
+
   return (
     <Transition name="matrix-fade">
-      <Boxed class={styles.container}>
+      <Boxed classList={{ [styles.container]: true }}>
+        Selections: {selectionLength()}
         {allValid() ? 'valid!' : 'invalid'}
         <Show
           when={!harmonicsQueryState().loading}
