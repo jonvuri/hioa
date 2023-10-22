@@ -5,7 +5,7 @@ import Button from 'solid-surfaces/components/Button'
 import { Grid } from 'solid-surfaces/components/Grid'
 import Lined from 'solid-surfaces/components/stellation/Lined'
 import Tagged from 'solid-surfaces/components/stellation/Tagged'
-import { Dimmed } from 'solid-surfaces/components/typo/Color'
+import { Dimmed, Shimmer } from 'solid-surfaces/components/typo/Color'
 import { ContrastHeader, Header } from 'solid-surfaces/components/typo/Header'
 
 import DeleteMatrix from './DeleteMatrix'
@@ -70,7 +70,9 @@ const Matrix: Component<MatrixProps> = (props) => {
                   <Lined>
                     <div class={styles['header-container']}>
                       <div style={{ display: 'flex' }}>
-                        <Header margin={false}>{name()}</Header>{' '}
+                        <Header margin={false}>
+                          <Shimmer>{name()}</Shimmer>
+                        </Header>{' '}
                         <Dimmed>[{props.matrix_id()}]</Dimmed>
                       </div>
                       <DeleteMatrix matrix_id={props.matrix_id} onClose={props.onClose} />
