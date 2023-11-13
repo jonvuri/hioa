@@ -10,7 +10,7 @@ import { ContrastHeader, Header } from 'solid-surfaces/components/typo/Header'
 
 import DeleteMatrix from './DeleteMatrix'
 import MatrixTable from './MatrixTable'
-import RowInput from './RowInput'
+import NewColumnInput from './NewColumnInput'
 import { useRowSelection } from './selection'
 import { getMatrixHarmonics, getMatrix } from '../harmonizer'
 
@@ -41,7 +41,7 @@ const Matrix: Component<MatrixProps> = (props) => {
 
   return (
     <>
-      <Grid full class={styles['main-header']}>
+      <Grid full>
         <div style={{ display: 'flex' }}>
           <Tagged bottom>
             <ContrastHeader>Root Matrix</ContrastHeader>
@@ -49,53 +49,53 @@ const Matrix: Component<MatrixProps> = (props) => {
           <Button onClick={props.onClose}>Close</Button>
         </div>
       </Grid>
-      <Grid full subgrid row_template="1fr auto">
-        <Grid full>
-          <Transition name="matrix-fade">
+      <Grid full classList={{ [styles['grid-container']]: true }}>
+        <Transition name="matrix-fade">
+          <Show
+            when={!harmonicsQueryState().loading && !matrixQueryState().loading}
+            fallback={<div>[ m load matrix .. ] [{props.matrix_id()}]</div>}
+          >
             <Show
-              when={!harmonicsQueryState().loading && !matrixQueryState().loading}
-              fallback={<div>[ m load matrix .. ] [{props.matrix_id()}]</div>}
-            >
-              <Show
-                when={!harmonicsQueryState().error && !matrixQueryState().error}
-                fallback={
-                  <div>
-                    [ m load error ! ] [
-                    {harmonicsQueryState().error && ` ${harmonicsQueryState().error} `}
-                    {matrixQueryState().error && ` ${matrixQueryState().error} `}]
-                  </div>
-                }
-              >
-                <div class={styles.container}>
-                  <Lined>
-                    <div class={styles['header-container']}>
-                      <div style={{ display: 'flex' }}>
-                        <Header margin={false}>
-                          <Shimmer>{name()}</Shimmer>
-                        </Header>{' '}
-                        <Dimmed>[{props.matrix_id()}]</Dimmed>
-                      </div>
-                      <DeleteMatrix matrix_id={props.matrix_id} onClose={props.onClose} />
-                    </div>
-                  </Lined>
-                  {data()?.length && (
-                    <MatrixTable
-                      matrix_id={props.matrix_id}
-                      columns={columnSpecs}
-                      data={data}
-                      rowSelection={rowSelection}
-                      selectRow={selectRow}
-                      deselectRow={deselectRow}
-                    />
-                  )}
+              when={!harmonicsQueryState().error && !matrixQueryState().error}
+              fallback={
+                <div>
+                  [ m load error ! ] [
+                  {harmonicsQueryState().error && ` ${harmonicsQueryState().error} `}
+                  {matrixQueryState().error && ` ${matrixQueryState().error} `}]
                 </div>
-              </Show>
+              }
+            >
+              <div class={styles.container}>
+                <Lined>
+                  <div class={styles['header-container']}>
+                    <div style={{ display: 'flex' }}>
+                      <Header margin={false}>
+                        <Shimmer>{name()}</Shimmer>
+                      </Header>{' '}
+                      <Dimmed>[{props.matrix_id()}]</Dimmed>
+                    </div>
+                    <DeleteMatrix matrix_id={props.matrix_id} onClose={props.onClose} />
+                  </div>
+                </Lined>
+                <div class={styles['body-container']}>
+                  <Show when={data()?.length} fallback={<div>Loading...</div>}>
+                    <>
+                      <MatrixTable
+                        matrix_id={props.matrix_id}
+                        columns={columnSpecs}
+                        data={data}
+                        rowSelection={rowSelection}
+                        selectRow={selectRow}
+                        deselectRow={deselectRow}
+                      />
+                      <NewColumnInput matrix_id={props.matrix_id} />
+                    </>
+                  </Show>
+                </div>
+              </div>
             </Show>
-          </Transition>
-        </Grid>
-        <Grid full>
-          <RowInput matrix_id={props.matrix_id} rowSelection={rowSelection} />
-        </Grid>
+          </Show>
+        </Transition>
       </Grid>
     </>
   )

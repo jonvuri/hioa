@@ -11,10 +11,11 @@ import {
 import CellInput from './CellInput'
 import CellSelect from './CellSelect'
 import { RowSelection } from './selection'
-import { updateRow, ROW_ID_COLUMN_NAME, deleteRows } from '../harmonizer'
+import { updateRow, ROW_ID_COLUMN_NAME } from '../harmonizer'
 import { Row, RowId, ColumnId } from '../types'
 
 import styles from './MatrixTable.module.sass'
+import RowInput from './RowInput'
 
 type ColumnSpec = {
   key: string
@@ -96,54 +97,39 @@ const MatrixTable: Component<MatrixTableProps> = (props) => {
   )
 
   return (
-    <>
-      <button
-        onClick={() => {
-          const selection = table().options.meta?.rowSelection?.()
-
-          if (selection) {
-            const ids = Object.keys(selection).filter((id) => selection[id])
-            deleteRows(props.matrix_id(), ids)
-          } else {
-            throw new Error('SelectionCell: selection meta not found')
-          }
-        }}
-      >
-        Delete
-      </button>
-      <table class={styles['table']}>
-        <thead>
-          <For each={table().getHeaderGroups()}>
-            {(headerGroup) => (
-              <tr>
-                <For each={headerGroup.headers}>
-                  {(header) => (
-                    <th>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(header.column.columnDef.header, header.getContext())}
-                    </th>
-                  )}
-                </For>
-              </tr>
-            )}
-          </For>
-        </thead>
-        <tbody>
-          <For each={table().getRowModel().rows}>
-            {(row) => (
-              <tr>
-                <For each={row.getVisibleCells()}>
-                  {(cell) => (
-                    <td>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
-                  )}
-                </For>
-              </tr>
-            )}
-          </For>
-        </tbody>
-      </table>
-    </>
+    <table class={styles['table']}>
+      <thead>
+        <For each={table().getHeaderGroups()}>
+          {(headerGroup) => (
+            <tr>
+              <For each={headerGroup.headers}>
+                {(header) => (
+                  <th>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </th>
+                )}
+              </For>
+            </tr>
+          )}
+        </For>
+      </thead>
+      <tbody>
+        <For each={table().getRowModel().rows}>
+          {(row) => (
+            <tr>
+              <For each={row.getVisibleCells()}>
+                {(cell) => (
+                  <td>{flexRender(cell.column.columnDef.cell, cell.getContext())}</td>
+                )}
+              </For>
+            </tr>
+          )}
+        </For>
+        <RowInput matrix_id={props.matrix_id} rowSelection={props.rowSelection} />
+      </tbody>
+    </table>
   )
 }
 

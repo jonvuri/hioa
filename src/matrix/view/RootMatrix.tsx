@@ -33,7 +33,7 @@ const RootMatrix: Component<RootMatrixProps> = (props) => {
 
   return (
     <>
-      <Grid full class={styles['main-header']}>
+      <Grid full>
         <Tagged bottom>
           <ContrastHeader>Root Matrix</ContrastHeader>
         </Tagged>

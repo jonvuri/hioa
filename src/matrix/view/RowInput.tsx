@@ -1,12 +1,9 @@
-import { Accessor, Component, For, Show, createSignal } from 'solid-js'
+import { Accessor, Component, For, Match, Switch, createSignal } from 'solid-js'
 import Input from 'solid-surfaces/components/Input'
-import Boxed from 'solid-surfaces/components/stellation/Boxed'
 import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { Transition } from 'solid-transition-group'
 
-import { getMatrixHarmonics, insertRow } from '../harmonizer'
-
-import NewColumnInput from './NewColumnInput'
+import { deleteRows, getMatrixHarmonics, insertRow } from '../harmonizer'
 import { RowSelection } from './selection'
 
 import styles from './RowInput.module.sass'
@@ -63,22 +60,46 @@ const RowInput: Component<RowInputProps> = (props) => {
 
   return (
     <Transition name="matrix-fade">
-      <Boxed classList={{ [styles.container]: true }}>
-        Selections: {selectionLength()}
-        {allValid() ? 'valid!' : 'invalid'}
-        <Show
-          when={!harmonicsQueryState().loading}
-          fallback={<div>[ m input req .. ] [{props.matrix_id()}]</div>}
-        >
-          <Show
-            when={harmonicsRows()?.column_definitions?.length}
-            fallback={<Dimmed>[ no columns yet ]</Dimmed>}
-          >
+      <tr classList={{ [styles.container]: true }}>
+        <td>{selectionLength()}</td>
+        <Switch>
+          <Match when={harmonicsQueryState().loading}>
+            <div>[ m input req .. ] [{props.matrix_id()}]</div>
+          </Match>
+          <Match when={harmonicsQueryState().error}>
+            <div>
+              [ m input error ! ] [
+              {harmonicsQueryState().error && ` ${harmonicsQueryState().error} `}]
+            </div>
+          </Match>
+          <Match when={harmonicsRows()?.column_definitions?.length === 0}>
+            <Dimmed>[m input no columns yet .. ] [{props.matrix_id()}]</Dimmed>
+          </Match>
+          <Match when={selectionLength() > 0}>
+            <button
+              onClick={() => {
+                const selection = props.rowSelection()
+
+                if (selection) {
+                  const ids = Object.keys(selection).filter((id) => selection[id])
+                  deleteRows(props.matrix_id(), ids)
+                } else {
+                  throw new Error('SelectionCell: selection meta not found')
+                }
+              }}
+            >
+              Delete
+            </button>
+          </Match>
+          <Match when={allValid()}>
+            <Dimmed>[m input all valid .. ] [{props.matrix_id()}]</Dimmed>
+          </Match>
+          <Match when={true}>
             <For each={harmonicsRows()?.column_definitions}>
               {(column) => (
-                <>
-                  [ column valid: {valid(columnInput(column.column_id)) ? 'yes' : 'no'} ]
+                <td>
                   <Input
+                    classList={{ [styles.valid]: valid(columnInput(column.column_id)) }}
                     placeholder={column.column_name}
                     value={columnInput(column.column_id)}
                     onInput={[
@@ -93,13 +114,12 @@ const RowInput: Component<RowInputProps> = (props) => {
                       }
                     }}
                   />
-                </>
+                </td>
               )}
             </For>
-          </Show>
-          <NewColumnInput matrix_id={props.matrix_id} />
-        </Show>
-      </Boxed>
+          </Match>
+        </Switch>
+      </tr>
     </Transition>
   )
 }

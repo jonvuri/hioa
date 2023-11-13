@@ -6,8 +6,8 @@ import 'surface-fonts/index.css'
 import { ExecResults } from './db/client'
 import { initialize } from './matrix/harmonizer'
 
-import './App.sass'
-import styles from './root.module.sass'
+import './global.sass'
+import styles from './App.module.sass'
 import Router from './Router'
 
 const App: Component = () => {
@@ -15,7 +15,11 @@ const App: Component = () => {
 
   return (
     <Main>
-      <LayoutGrid class={styles['app-container']} row_template="auto 1fr">
+      <LayoutGrid
+        containerClassList={{ [styles['app-grid-container']]: true }}
+        gridClassList={{ [styles['app-grid']]: true }}
+        row_template="auto 1fr"
+      >
         {initialized.loading ? (
           <div>[ init .. ]</div>
         ) : initialized.error ? (
