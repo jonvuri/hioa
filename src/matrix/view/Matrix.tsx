@@ -78,7 +78,7 @@ const Matrix: Component<MatrixProps> = (props) => {
                   </div>
                 </Lined>
                 <div class={styles['body-container']}>
-                  <Show when={data()?.length} fallback={<div>Loading...</div>}>
+                  <Show when={data()} fallback={<div>Loading...</div>}>
                     <>
                       <MatrixTable
                         matrix_id={props.matrix_id}
