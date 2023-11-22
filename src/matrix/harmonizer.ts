@@ -10,7 +10,7 @@ export enum ColumnType {
   Number = 'REAL',
 }
 
-type ColumnDefinition = {
+export type ColumnDefinition = {
   column_id: string
   column_name: string
   column_type?: string

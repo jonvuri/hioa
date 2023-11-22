@@ -34,7 +34,7 @@ const RootMatrix: Component<RootMatrixProps> = (props) => {
   return (
     <>
       <Grid full>
-        <Tagged bottom>
+        <Tagged bottomLeft>
           <ContrastHeader>Root Matrix</ContrastHeader>
         </Tagged>
       </Grid>

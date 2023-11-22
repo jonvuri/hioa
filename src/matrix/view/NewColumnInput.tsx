@@ -53,7 +53,7 @@ const MatrixInput: Component<MatrixInputProps> = (props) => {
         </Match>
         <Match when={addingNewColumn() === 'input'}>
           <div classList={{ [styles['add-column-container']]: true }}>
-            <Tagged right inner>
+            <Tagged innerTopRight>
               <Label>Column type</Label>
               <select
                 name="columnType"
@@ -66,7 +66,7 @@ const MatrixInput: Component<MatrixInputProps> = (props) => {
                 <option value="number">Number</option>
               </select>
             </Tagged>
-            <Tagged right inner>
+            <Tagged innerTopRight>
               <Label>Column name</Label>
               <Input
                 placeholder="New column name"

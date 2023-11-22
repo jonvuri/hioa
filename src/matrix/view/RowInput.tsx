@@ -1,12 +1,20 @@
-import { Accessor, Component, For, Match, Switch, createSignal } from 'solid-js'
+import { Accessor, Component, For, Match, Switch, createEffect, on } from 'solid-js'
+import { createStore } from 'solid-js/store'
+
 import Input from 'solid-surfaces/components/Input'
 import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { Transition } from 'solid-transition-group'
 
-import { deleteRows, getMatrixHarmonics, insertRow } from '../harmonizer'
+import {
+  deleteRows,
+  getMatrixHarmonics,
+  insertRow,
+  ColumnDefinition,
+} from '../harmonizer'
 import { RowSelection } from './selection'
 
 import styles from './RowInput.module.sass'
+import Tagged from 'solid-surfaces/components/stellation/Tagged'
 
 type RowInputProps = {
   matrix_id: Accessor<string>
@@ -16,44 +24,62 @@ type RowInputProps = {
 const RowInput: Component<RowInputProps> = (props) => {
   const [harmonicsRows, harmonicsQueryState] = getMatrixHarmonics(props.matrix_id)
 
-  const [inputs, setInputs] = createSignal<Record<string, string> | null>(null)
+  const [inputStore, setInputStore] = createStore<{
+    [column_id: string]: {
+      columnDef: ColumnDefinition
+      inputState: {
+        value: string
+      }
+    }
+  }>({})
 
-  const updateInput = (column_id: string, value: string) => {
-    let currentInputs = inputs()
-
-    if (currentInputs === null) {
-      currentInputs = Object.fromEntries(
-        // Result will never be null because inputs are hidden till defined
-        harmonicsRows()!.column_definitions.map((column) => [column.column_id, '']),
+  const resetInputs = () => {
+    const columnDefs = harmonicsRows()?.column_definitions
+    // When harmonicsRows changes, update inputStore
+    // This will trigger re-render of inputs
+    if (columnDefs) {
+      setInputStore(
+        Object.fromEntries(
+          columnDefs.map((column) => [
+            column.column_id,
+            {
+              columnDef: column,
+              inputState: {
+                value: '',
+              },
+            },
+          ]),
+        ),
       )
     }
+  }
 
-    setInputs({
-      ...currentInputs,
-      [column_id]: value,
-    })
+  createEffect(
+    on(harmonicsRows, () => {
+      resetInputs()
+    }),
+  )
+
+  const updateInput = (column_id: string, value: string) => {
+    setInputStore(column_id, 'inputState', 'value', value)
   }
 
   const commitInsert = () => {
     if (allValid()) {
       const column_defs = harmonicsRows()!.column_definitions
       const column_ids = column_defs.map((column) => column.column_id)
-      const values = column_ids.map((column_id) => inputs()?.[column_id])
+      const values = column_ids.map((column_id) => inputStore[column_id].inputState.value)
       insertRow(props.matrix_id(), column_ids, values)
-      setInputs(null)
+      resetInputs()
     }
   }
-
-  const columnInput = (column_id: string) => inputs()?.[column_id] || ''
 
   const valid = (value: string) => {
     return value.trim().length > 0
   }
 
   const allValid = () => {
-    const currentInputs = inputs()
-
-    return currentInputs !== null && Object.values(currentInputs).every(valid)
+    return Object.values(inputStore).every((input) => valid(input.inputState.value))
   }
 
   const selectionLength = () => Object.keys(props.rowSelection()).length
@@ -91,29 +117,30 @@ const RowInput: Component<RowInputProps> = (props) => {
               Delete
             </button>
           </Match>
-          <Match when={allValid()}>
-            <Dimmed>[m input all valid .. ] [{props.matrix_id()}]</Dimmed>
-          </Match>
           <Match when={true}>
-            <For each={harmonicsRows()?.column_definitions}>
-              {(column) => (
+            <For each={Object.entries(inputStore)}>
+              {([column_id, column]) => (
                 <td>
-                  <Input
-                    classList={{ [styles.valid]: valid(columnInput(column.column_id)) }}
-                    placeholder={column.column_name}
-                    value={columnInput(column.column_id)}
-                    onInput={[
-                      (column_id: string, event) => {
-                        updateInput(column_id, event.currentTarget.value)
-                      },
-                      column.column_id,
-                    ]}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        commitInsert()
-                      }
-                    }}
-                  />
+                  <Tagged
+                    accent={valid(column.inputState.value)}
+                    innerTopLeft
+                    innerBottomLeft={allValid()}
+                  >
+                    <Input
+                      placeholder={column.columnDef.column_name}
+                      onInput={[
+                        (column_id: string, event) => {
+                          updateInput(column_id, event.currentTarget.value)
+                        },
+                        column_id,
+                      ]}
+                      onKeyDown={(event) => {
+                        if (event.key === 'Enter') {
+                          commitInsert()
+                        }
+                      }}
+                    />
+                  </Tagged>
                 </td>
               )}
             </For>

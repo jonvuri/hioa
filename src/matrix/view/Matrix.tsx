@@ -43,7 +43,7 @@ const Matrix: Component<MatrixProps> = (props) => {
     <>
       <Grid full>
         <div style={{ display: 'flex' }}>
-          <Tagged bottom>
+          <Tagged bottomLeft>
             <ContrastHeader>Root Matrix</ContrastHeader>
           </Tagged>
           <Button onClick={props.onClose}>Close</Button>
