@@ -7,6 +7,11 @@ import TickMark from './TickMark'
 import TimeBar from './TimeBar'
 
 const ImpulsePage: Component = () => {
+  const now = new Date()
+  const second = (now.getSeconds() + 1) % 60
+  const minute = ((now.getMinutes() + 1) % 60) + second / 60
+  const hour = ((now.getHours() + 1) % 24) + minute / 60 + second / 3600
+
   return (
     <>
       <Grid full>
@@ -15,11 +20,10 @@ const ImpulsePage: Component = () => {
         </Tagged>
       </Grid>
       <Grid full>
-        <>
-          <TimeBar cycleTime={3600} unitCount={60} cycleInitialProgress={0.4} />
-          <TimeBar cycleTime={60} unitCount={60} />
-          <TickMark />
-        </>
+        <TimeBar cycleTime={86400} unitCount={24} cycleInitialProgress={hour / 24} />
+        <TimeBar cycleTime={3600} unitCount={60} cycleInitialProgress={minute / 60} />
+        <TimeBar cycleTime={60} unitCount={60} cycleInitialProgress={second / 60} />
+        <TickMark />
       </Grid>
     </>
   )
