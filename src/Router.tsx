@@ -2,7 +2,6 @@ import { Accessor, Component, Match, Switch, createSignal } from 'solid-js'
 
 import RootMatrix from './matrix/view/RootMatrix'
 import Matrix from './matrix/view/Matrix'
-import ImpulsePage from './impulse/view/ImpulsePage'
 
 type Route =
   | {
@@ -11,9 +10,6 @@ type Route =
   | {
       id: 'matrix'
       matrix_id: Accessor<string>
-    }
-  | {
-      id: 'impulse'
     }
 
 const Router: Component = () => {
@@ -24,20 +20,11 @@ const Router: Component = () => {
   return (
     <Switch>
       <Match when={route().id === 'root-matrix'}>
-        <>
-          <RootMatrix
-            onSelectMatrix={(matrix_id: string) => {
-              setRoute({ id: 'matrix', matrix_id: () => matrix_id })
-            }}
-          />
-          <button
-            onClick={() => {
-              setRoute({ id: 'impulse' })
-            }}
-          >
-            Impulse
-          </button>
-        </>
+        <RootMatrix
+          onSelectMatrix={(matrix_id: string) => {
+            setRoute({ id: 'matrix', matrix_id: () => matrix_id })
+          }}
+        />
       </Match>
       <Match when={route().id === 'matrix'}>
         <Matrix
@@ -46,9 +33,6 @@ const Router: Component = () => {
             setRoute({ id: 'root-matrix' })
           }}
         />
-      </Match>
-      <Match when={route().id === 'impulse'}>
-        <ImpulsePage />
       </Match>
     </Switch>
   )
