@@ -1,4 +1,5 @@
 import { createMemo } from 'solid-js'
+import { Cron } from 'croner'
 
 import { execSql, subscribeSql } from '../db/client'
 import { Row } from './types'
@@ -15,6 +16,11 @@ export type ColumnDefinition = {
   column_name: string
   column_type?: string
 }
+
+// Test out croner
+Cron('*/5 * * * * *', () => {
+  console.log('This will run every fifth second')
+})
 
 // Initialize harmonics table on load if it doesn't yet exist
 export const initialize = () =>

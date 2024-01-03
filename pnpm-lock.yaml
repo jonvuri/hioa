@@ -14,6 +14,9 @@ dependencies:
   '@tanstack/solid-table':
     specifier: ^8.10.4
     version: 8.10.4(solid-js@1.7.6)
+  croner:
+    specifier: ^8.0.0
+    version: 8.0.0
   on-change:
     specifier: ^4.0.2
     version: 4.0.2
@@ -1369,6 +1372,11 @@ packages:
   /convert-source-map@1.9.0:
     resolution: {integrity: sha512-ASFBup0Mz1uyiIjANan1jzLQami9z1PoYSZCiiYW2FczPbenXc45FZdBZLzOT+r6+iciuEModtmCti+hjaAk0A==}
     dev: true
+
+  /croner@8.0.0:
+    resolution: {integrity: sha512-NhZ7wV9L0nxbSJKYp6u+OHCytFv4RlCu0O6GsglJIZMpMqmtb0kcNNPS5lv1O8qclhDA1NffLSsGx2ftbWQamw==}
+    engines: {node: '>=18.0'}
+    dev: false
 
   /cross-spawn@7.0.3:
     resolution: {integrity: sha512-iRDPJKUPVEND7dHPO8rkbOnPpyDygcDFtWjpeWNCgy8WP2rXcxXL8TskReQl6OrB2G7+UJrags1q15Fudc7G6w==}
