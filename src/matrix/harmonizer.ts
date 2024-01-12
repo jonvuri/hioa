@@ -17,9 +17,24 @@ export type ColumnDefinition = {
   column_type?: string
 }
 
+// Create a new worker that gives the square root of its input
+const workerCode = `
+  onmessage = ({ data }) => {
+    postMessage(Math.sqrt(data));
+  }
+`
+const blob = new Blob([workerCode], { type: 'application/javascript' })
+const worker = new Worker(URL.createObjectURL(blob))
+
+worker.onmessage = ({ data }) => {
+  console.log('worker message: ', data)
+}
+
 // Test out croner
-Cron('*/5 * * * * *', () => {
-  console.log('This will run every fifth second')
+Cron('*/1 * * * * *', () => {
+  console.log('This will run every second')
+
+  worker.postMessage(4)
 })
 
 // Initialize harmonics table on load if it doesn't yet exist
