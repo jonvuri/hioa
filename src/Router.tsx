@@ -1,36 +1,36 @@
 import { Accessor, Component, Match, Switch, createSignal } from 'solid-js'
 
-import RootMatrix from './matrix/view/RootMatrix'
-import Matrix from './matrix/view/Matrix'
+import Root from './cell/view/Root'
+import Cell from './cell/view/Cell'
 
 type Route =
   | {
-      id: 'root-matrix'
+      id: 'root'
     }
   | {
-      id: 'matrix'
-      matrix_id: Accessor<string>
+      id: 'cell'
+      cell_id: Accessor<string>
     }
 
 const Router: Component = () => {
   const [route, setRoute] = createSignal<Route>({
-    id: 'root-matrix',
+    id: 'root',
   })
 
   return (
     <Switch>
-      <Match when={route().id === 'root-matrix'}>
-        <RootMatrix
-          onSelectMatrix={(matrix_id: string) => {
-            setRoute({ id: 'matrix', matrix_id: () => matrix_id })
+      <Match when={route().id === 'root'}>
+        <Root
+          onSelectCell={(cell_id: string) => {
+            setRoute({ id: 'cell', cell_id: () => cell_id })
           }}
         />
       </Match>
-      <Match when={route().id === 'matrix'}>
-        <Matrix
-          matrix_id={(route() as Extract<Route, { id: 'matrix' }>).matrix_id}
+      <Match when={route().id === 'cell'}>
+        <Cell
+          cell_id={(route() as Extract<Route, { id: 'cell' }>).cell_id}
           onClose={() => {
-            setRoute({ id: 'root-matrix' })
+            setRoute({ id: 'root' })
           }}
         />
       </Match>

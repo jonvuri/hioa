@@ -4,7 +4,7 @@ import Main from 'solid-surfaces/components/Main'
 import 'surface-fonts/index.css'
 
 import { ExecResults } from './db/client'
-import { initialize } from './matrix/harmonizer'
+import { initialize } from './cell/harmonizer'
 
 import './global.sass'
 import styles from './App.module.sass'
