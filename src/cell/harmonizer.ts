@@ -1,6 +1,7 @@
-import { createMemo } from 'solid-js'
-import { execSql, subscribeSql } from '../db/client'
-import { CellType } from './types'
+import { map } from 'rxjs'
+
+import { execSql, getObservable } from '../db/client'
+import { Cell, DehydratedCell, CellType, CellDefinition } from './types'
 
 // Initialize cell table on load if it doesn't yet exist
 export const initialize = () =>
@@ -21,26 +22,44 @@ export const initialize = () =>
     CREATE INDEX IF NOT EXISTS __cell_parent_id ON __cell (parent_id);
   `)
 
-export const createCell = (name?: string) => {
+export const createCell = (
+  cell_type: CellType,
+  parent_id: string | null,
+  root_id: string | null,
+  name?: string,
+) => {
   const cell_id = `__cell_${Date.now().toString(16)}`
 
-  return execSql(`
+  return execSql(
+    `
     INSERT INTO __cell (
       id,
+      root_id,
+      parent_id,
       name,
       type,
       definition,
       created_at,
       updated_at
     ) VALUES (
-      '${cell_id}',
-      ${name?.trim() ? `'${name}'` : 'NULL'},
-      1,
+      $cell_id,
+      $root_id,
+      $parent_id,
+      $name,
+      $cell_type,
       '{}',
       datetime('now'),
       datetime('now')
     );
-  `)
+  `,
+    {
+      $cell_id: cell_id,
+      $root_id: root_id,
+      $parent_id: parent_id,
+      $name: name,
+      $cell_type: cell_type,
+    },
+  )
 }
 
 export const deleteCell = (cell_id: string) =>
@@ -50,14 +69,8 @@ export const deleteCell = (cell_id: string) =>
   `)
 
 export const listRootCells = () =>
-  subscribeSql<{
-    id: string
-    name: string
-    type: CellType
-    created_at: string
-    updated_at: string
-  }>(
-    () => `
+  getObservable<Cell>(
+    `
       SELECT
         id,
         name,
@@ -69,21 +82,11 @@ export const listRootCells = () =>
       WHERE
         root_id IS NULL;
     `,
-    'id',
   )
 
-export const getCell = (cell_id: () => string) => {
-  const [results, queryState] = subscribeSql<{
-    id: string
-    root_id: string
-    parent_id: string
-    name: string
-    type: CellType
-    definition: string
-    created_at: string
-    updated_at: string
-  }>(
-    () => `
+export const listCellsInRoot = (root_id: string) =>
+  getObservable<DehydratedCell>(
+    `
       SELECT
         id,
         root_id,
@@ -96,20 +99,72 @@ export const getCell = (cell_id: () => string) => {
       FROM
         __cell
       WHERE
-        id = '${cell_id()}';
+        root_id = '${root_id}';
     `,
-    'id',
+  ).pipe(
+    map((queryState) => {
+      const rows = queryState.rows?.map(
+        (row): Cell => ({
+          ...row,
+          definition: JSON.parse(row.definition),
+        }),
+      )
+
+      return {
+        loading: queryState.loading,
+        error: queryState.error,
+        rows,
+      }
+    }),
   )
 
-  const hydratedResults = createMemo(() => {
-    const result = results()?.[0]
-    if (result) {
-      return {
-        ...result,
-        definition: JSON.parse(result.definition),
-      }
-    }
-  })
+export const getCell = (cell_id: string) => {
+  const listQueryState = getObservable<DehydratedCell>(
+    `
+      SELECT
+        id,
+        root_id,
+        parent_id,
+        name,
+        type,
+        definition,
+        created_at,
+        updated_at
+      FROM
+        __cell
+      WHERE
+        id = '${cell_id}';
+    `,
+  )
 
-  return [hydratedResults, queryState] as [typeof hydratedResults, typeof queryState]
+  const cellQueryState = listQueryState.pipe(
+    map((queryState) => {
+      const first = queryState.rows?.[0]
+      const result = first
+        ? ({
+            ...first,
+            definition: JSON.parse(first.definition),
+          } as Cell)
+        : null
+
+      return {
+        loading: queryState.loading,
+        error: queryState.error,
+        result,
+      }
+    }),
+  )
+
+  return cellQueryState
 }
+
+export const updateCellDefinition = (cell_id: string, definition: CellDefinition) =>
+  execSql(
+    `
+    UPDATE __cell
+    SET definition = $definition,
+        updated_at = datetime('now')
+    WHERE id = $cell_id;
+  `,
+    { $cell_id: cell_id, $definition: JSON.stringify(definition) },
+  )

@@ -1,90 +1,110 @@
+import { BehaviorSubject, Observable, share } from 'rxjs'
 import { PWBHost } from 'promise-worker-bi'
 
 import DbWorker from './worker?worker'
 
 import { ClientMessage, WorkerMessage } from './types'
-import { createMemo, createSignal, onCleanup } from 'solid-js'
 
 const worker = new DbWorker()
 const promiseWorker = new PWBHost(worker)
 
 type Sql = string
-type ListenerCallback = (rows: unknown[]) => void
-type Listener = {
+
+// TODO: Add query state wrapper
+type UnreifiedRow = Record<string, unknown>
+
+type QueryResult = {
   sql: Sql
-  listener: ListenerCallback
+  rows: UnreifiedRow[] | null
+  error: string | null
 }
 
-const listeners: Listener[] = []
+type ListenerCallback = (rows: QueryResult) => void
 
-const resultCache: Record<Sql, unknown[]> = {}
+const workerListeners: Record<Sql, ListenerCallback> = {}
 
-const addListener = (sql: Sql, listener: ListenerCallback) => {
-  for (const { sql: existingSql, listener: existingListener } of listeners) {
-    if (sql === existingSql) {
-      if (listener === existingListener) {
-        return
-      } else {
-        // Already subscribed to this sql, so just add listener without subscribing,
-        // and also immediately send it the cached result if any
-        listeners.push({ sql, listener })
+const notifyListener = (sql: Sql, result: QueryResult) => {
+  const listener = workerListeners[sql]
 
-        const cachedResult = resultCache[sql]
-        if (cachedResult) {
-          listener(cachedResult)
-        }
-        return
-      }
-    }
+  if (listener) {
+    listener(result)
+  } else {
+    // TODO: Only throw in dev mode, otherwise just log
+    throw new Error(`Got subscribed rows for '${sql}', but there is no listener`)
   }
-
-  // No listeners for this sql yet, so both add and subscribe
-  listeners.push({ sql, listener })
-  promiseWorker.postMessage({ type: 'subscribe', payload: sql } as ClientMessage)
 }
 
-const removeListener = (listener: ListenerCallback) => {
-  const index = listeners.findIndex(
-    ({ listener: existingListener }) => listener === existingListener,
+type QueryState<RowType> = {
+  sql: Sql
+  loading: boolean
+  error: string | null
+  rows: RowType[] | null
+}
+
+const sqlObservables: Record<Sql, Observable<QueryState<UnreifiedRow>>> = {}
+
+const createObservable = (sql: Sql) =>
+  new Observable<QueryState<UnreifiedRow>>((subscribe) => {
+    if (workerListeners[sql]) {
+      // TODO: Only throw in dev mode, otherwise just log
+      throw new Error(`Tried to add a listener for '${sql}', but one already exists`)
+    }
+
+    workerListeners[sql] = (result) => {
+      subscribe.next({
+        sql,
+        loading: false,
+        error: result.error,
+        rows: result.rows,
+      })
+    }
+
+    promiseWorker.postMessage({ type: 'subscribe', payload: sql } as ClientMessage)
+
+    return () => {
+      delete workerListeners[sql]
+
+      promiseWorker.postMessage({ type: 'unsubscribe', payload: sql } as ClientMessage)
+    }
+  }).pipe(
+    share({
+      connector: () =>
+        new BehaviorSubject<QueryState<UnreifiedRow>>({
+          sql,
+          loading: true,
+          error: null,
+          rows: null,
+        }),
+    }),
   )
 
-  if (index === -1) {
-    return
+export const getObservable = <RowType>(sql: Sql) => {
+  let observable = sqlObservables[sql]
+
+  if (!observable) {
+    observable = createObservable(sql)
+    sqlObservables[sql] = observable
   }
 
-  const { sql } = listeners[index]
-
-  listeners.splice(index, 1)
-
-  for (const { sql: existingSql } of listeners) {
-    if (sql === existingSql) {
-      // Listener still exists for this sql, so don't unsubscribe
-      return
-    }
-  }
-
-  // No listeners for this sql anymore, so unsubscribe and clear the cache
-  promiseWorker.postMessage({ type: 'unsubscribe', payload: sql } as ClientMessage)
-  delete resultCache[sql]
-}
-
-const notifyListeners = (sql: Sql, rows: unknown[]) => {
-  for (const { sql: existingSql, listener } of listeners) {
-    if (sql === existingSql) {
-      listener(rows)
-    }
-  }
-
-  resultCache[sql] = rows
+  return observable as Observable<QueryState<RowType>>
 }
 
 promiseWorker.register((msg) => {
   const message = msg as unknown as WorkerMessage
   switch (message.type) {
     case 'subscribed-query-result':
-      notifyListeners(message.payload.sql, message.payload.rows)
+      notifyListener(message.payload.sql, {
+        sql: message.payload.sql,
+        rows: message.payload.rows as UnreifiedRow[],
+        error: null,
+      })
       break
     case 'subscribed-query-error':
+      notifyListener(message.payload.sql, {
+        sql: message.payload.sql,
+        rows: null,
+        error: message.payload.error,
+      })
       console.error(
         'Error for subscribed query %s: %s',
         message.payload.sql,
@@ -102,11 +122,11 @@ promiseWorker.register((msg) => {
   }
 })
 
-export type ExecResults = Record<string, unknown>[]
+export type ExecResults = UnreifiedRow[]
 
 export const execSql = async (
   sql: string,
-  bindParams?: unknown[],
+  bindParams?: unknown[] | Record<string, unknown>,
 ): Promise<ExecResults> => {
   return promiseWorker.postMessage({
     type: 'query',
@@ -123,99 +143,3 @@ declare global {
   }
 }
 window.sql = execSql
-
-export type Store<T> =
-  | {
-      result: T | null
-      loading: true
-      error: string | null
-    }
-  | {
-      result: T
-      loading: false
-      error: null
-    }
-  | {
-      result: null
-      loading: false
-      error: string
-    }
-
-// TODO: Reverify that onCleanup works as expected
-export const subscribeSql = <ResultRow extends Record<string, unknown>>(
-  sql: () => string,
-  idKey: string,
-) => {
-  const [rows, setRows] = createSignal<ResultRow[] | undefined>()
-  const [queryState, setQueryState] = createSignal<{
-    loading: boolean
-    error: Error | null
-  }>({ loading: true, error: null })
-
-  // TODO: Return query meta?
-  // const [meta, setMeta] = createStore<{ columns: string[]; types: string[] }>({
-
-  createMemo(() => {
-    // TODO: Error handling
-    const listener = ((newRows: ResultRow[]) => {
-      setQueryState({
-        loading: false,
-        error: null,
-      })
-
-      setRows((oldRows) => {
-        if (!oldRows) {
-          return newRows
-        }
-
-        const ret = new Array(newRows.length)
-        let changed = false
-
-        for (const index in newRows) {
-          const newRow = newRows[index]
-          const oldRow = oldRows[index]
-
-          if (oldRow) {
-            if (oldRow[idKey] === newRow[idKey]) {
-              let rowChanged = false
-
-              for (const key in newRow) {
-                if (oldRow[key] !== newRow[key]) {
-                  rowChanged = true
-                  break
-                }
-              }
-
-              if (rowChanged) {
-                ret[index] = newRow
-                changed = true
-              } else {
-                ret[index] = oldRow
-              }
-            } else {
-              ret[index] = newRow
-              changed = true
-            }
-          } else {
-            ret[index] = newRow
-            changed = true
-          }
-        }
-
-        if (changed) {
-          return ret
-        } else {
-          return oldRows
-        }
-      })
-    }) as ListenerCallback
-
-    addListener(sql(), listener)
-
-    onCleanup(() => {
-      removeListener(listener)
-    })
-  })
-
-  return [rows, queryState] as [typeof rows, typeof queryState]
-}

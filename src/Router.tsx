@@ -1,7 +1,7 @@
 import { Accessor, Component, Match, Switch, createSignal } from 'solid-js'
 
 import Root from './cell/view/Root'
-import Cell from './cell/view/Cell'
+import RootCell from './cell/view/RootCell'
 
 type Route =
   | {
@@ -27,7 +27,7 @@ const Router: Component = () => {
         />
       </Match>
       <Match when={route().id === 'cell'}>
-        <Cell
+        <RootCell
           cell_id={(route() as Extract<Route, { id: 'cell' }>).cell_id}
           onClose={() => {
             setRoute({ id: 'root' })

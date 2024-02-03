@@ -16,8 +16,8 @@ const App: Component = () => {
   return (
     <Main>
       <LayoutGrid
-        containerClassList={{ [styles['app-grid-container']]: true }}
-        gridClassList={{ [styles['app-grid']]: true }}
+        containerClassList={{ [styles['app-grid-container']!]: true }}
+        gridClassList={{ [styles['app-grid']!]: true }}
         row_template="auto 1fr"
       >
         {initialized.loading ? (

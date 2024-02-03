@@ -1,4 +1,4 @@
-import { Component, For, createSignal } from 'solid-js'
+import { Component, For, createSignal, from } from 'solid-js'
 import { Transition } from 'solid-transition-group'
 import Input from 'solid-surfaces/components/Input'
 import { Grid } from 'solid-surfaces/components/Grid'
@@ -7,6 +7,7 @@ import Tagged from 'solid-surfaces/components/stellation/Tagged'
 import { ContrastHeader } from 'solid-surfaces/components/typo/Header'
 
 import { createCell, listRootCells } from '../harmonizer'
+import { CellType } from '../types'
 
 import styles from './Root.module.sass'
 
@@ -15,9 +16,9 @@ type RootProps = {
 }
 
 const RootMatrix: Component<RootProps> = (props) => {
-  const [newCellName, setNewCellName] = createSignal('')
+  const cells = from(listRootCells())
 
-  const [cells, cellsQueryState] = listRootCells()
+  const [newCellName, setNewCellName] = createSignal('')
 
   const handleInput = (e: Event) => {
     const target = e.target as HTMLInputElement
@@ -26,7 +27,7 @@ const RootMatrix: Component<RootProps> = (props) => {
 
   const handleKeyDown = (e: KeyboardEvent) => {
     if (e.key === 'Enter') {
-      createCell(newCellName())
+      createCell(CellType.List, null, null, newCellName())
       setNewCellName('')
     }
   }
@@ -42,10 +43,12 @@ const RootMatrix: Component<RootProps> = (props) => {
         <Grid full>
           <Transition name="matrix-fade">
             <div>
-              {cellsQueryState().loading ? (
+              {cells()?.loading ? (
                 '[ cells load ]'
+              ) : cells()?.error ? (
+                `[ cells error ! ] [ ${cells()?.error} ]`
               ) : (
-                <For each={cells() || []}>
+                <For each={cells()?.rows || []}>
                   {(cell) => (
                     <div
                       class={styles['cell']}
