@@ -3,7 +3,7 @@ import { PWBHost } from 'promise-worker-bi'
 
 import DbWorker from './worker?worker'
 
-import { ClientMessage, WorkerMessage } from './types'
+import { ClientMessage, UpdateInfo, WorkerMessage } from './types'
 
 const worker = new DbWorker()
 const promiseWorker = new PWBHost(worker)
@@ -16,6 +16,7 @@ type UnreifiedRow = Record<string, unknown>
 type QueryResult = {
   sql: Sql
   rows: UnreifiedRow[] | null
+  updateInfo: UpdateInfo | null
   error: string | null
 }
 
@@ -34,12 +35,57 @@ const notifyListener = (sql: Sql, result: QueryResult) => {
   }
 }
 
-type QueryState<RowType> = {
-  sql: Sql
-  loading: boolean
-  error: string | null
-  rows: RowType[] | null
-}
+export type QueryState<RowType> =
+  | {
+      // Loading
+      sql: Sql
+      loading: true
+      error: null
+      rows: null
+      updateInfo: null
+    }
+  | {
+      // Error
+      sql: Sql
+      loading: false
+      error: string
+      rows: null
+      updateInfo: null
+    }
+  | {
+      // Success
+      sql: Sql
+      loading: false
+      error: null
+      rows: RowType[]
+      updateInfo: UpdateInfo | null
+    }
+
+export type SingleResultQueryState<Result> =
+  | {
+      // Loading
+      sql: Sql
+      loading: true
+      error: null
+      result: null
+      updateInfo: null
+    }
+  | {
+      // Error
+      sql: Sql
+      loading: false
+      error: string
+      result: null
+      updateInfo: null
+    }
+  | {
+      // Success
+      sql: Sql
+      loading: false
+      error: null
+      result: Result
+      updateInfo: UpdateInfo | null
+    }
 
 const sqlObservables: Record<Sql, Observable<QueryState<UnreifiedRow>>> = {}
 
@@ -51,12 +97,26 @@ const createObservable = (sql: Sql) =>
     }
 
     workerListeners[sql] = (result) => {
-      subscribe.next({
-        sql,
-        loading: false,
-        error: result.error,
-        rows: result.rows,
-      })
+      if (result.error) {
+        subscribe.next({
+          sql,
+          loading: false,
+          error: result.error,
+          rows: null,
+          updateInfo: null,
+        })
+      } else if (result.rows) {
+        subscribe.next({
+          sql,
+          loading: false,
+          error: null,
+          rows: result.rows,
+          updateInfo: result.updateInfo || null,
+        })
+      } else {
+        // TODO: Only throw in dev, log otherwise
+        throw new Error(`Got a result with no rows and no error: ${result}`)
+      }
     }
 
     promiseWorker.postMessage({ type: 'subscribe', payload: sql } as ClientMessage)
@@ -74,6 +134,7 @@ const createObservable = (sql: Sql) =>
           loading: true,
           error: null,
           rows: null,
+          updateInfo: null,
         }),
     }),
   )
@@ -96,6 +157,7 @@ promiseWorker.register((msg) => {
       notifyListener(message.payload.sql, {
         sql: message.payload.sql,
         rows: message.payload.rows as UnreifiedRow[],
+        updateInfo: message.payload.update_info || null,
         error: null,
       })
       break
@@ -103,6 +165,7 @@ promiseWorker.register((msg) => {
       notifyListener(message.payload.sql, {
         sql: message.payload.sql,
         rows: null,
+        updateInfo: null,
         error: message.payload.error,
       })
       console.error(

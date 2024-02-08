@@ -15,7 +15,7 @@ type RootProps = {
   onSelectCell: (cell_id: string) => void
 }
 
-const RootMatrix: Component<RootProps> = (props) => {
+const Root: Component<RootProps> = (props) => {
   const cells = from(listRootCells())
 
   const [newCellName, setNewCellName] = createSignal('')
@@ -79,4 +79,4 @@ const RootMatrix: Component<RootProps> = (props) => {
   )
 }
 
-export default RootMatrix
+export default Root

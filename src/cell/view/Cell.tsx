@@ -1,5 +1,4 @@
-import { Component, For } from 'solid-js'
-import { debugOwnerSignals, debugProps } from '@solid-devtools/logger'
+import { Component, For, createContext, onMount, useContext } from 'solid-js'
 
 import Button from 'solid-surfaces/components/Button'
 import Input from 'solid-surfaces/components/Input'
@@ -15,18 +14,21 @@ import styles from './Cell.module.sass'
 
 const rootIdForCell = (cell: Cell) => cell.root_id || cell.id
 
+export const CellsInRootContext = createContext<Cell[]>([])
+
 type ListCellBodyProps = {
   cell: Cell
-  cellsInRoot: Cell[]
 }
 
 const ListCellBody: Component<ListCellBodyProps> = (props) => {
+  const cellsInRoot = useContext(CellsInRootContext)
+
   const addListCell = () => {
     createCell(
       CellType.List,
       props.cell.id,
       rootIdForCell(props.cell),
-      `list cell * ${props.cellsInRoot.length + 1}`,
+      `list cell * ${cellsInRoot.length + 1}`,
     )
   }
 
@@ -35,17 +37,17 @@ const ListCellBody: Component<ListCellBodyProps> = (props) => {
       CellType.Text,
       props.cell.id,
       rootIdForCell(props.cell),
-      `text cell * ${props.cellsInRoot.length + 1}`,
+      `text cell * ${cellsInRoot.length + 1}`,
     )
   }
 
   return (
     <>
       <For
-        each={props.cellsInRoot.filter((cell) => cell.parent_id === props.cell.id)}
+        each={cellsInRoot.filter((cell) => cell.parent_id === props.cell.id)}
         fallback={<div>[ no cells in list ]</div>}
       >
-        {(cell) => <HeaderedCell cell={cell} cellsInRoot={props.cellsInRoot} />}
+        {(cell) => <HeaderedCell cell={cell} />}
       </For>
       <Button onClick={addListCell}>Add list cell</Button>
       <Button onClick={addTextCell}>Add text cell</Button>
@@ -58,8 +60,7 @@ type TextCellBodyProps = {
 }
 
 const TextCellBody: Component<TextCellBodyProps> = (props) => {
-  debugProps(props)
-  debugOwnerSignals()
+  let input: HTMLInputElement | undefined
 
   const handleInput = (e: Event) => {
     const target = e.target as HTMLInputElement
@@ -71,10 +72,14 @@ const TextCellBody: Component<TextCellBodyProps> = (props) => {
     updateCellDefinition(props.cell.id, definition)
   }
 
+  onMount(() => {
+    input!.value = props.cell.definition.text
+  })
+
   return (
     <Boxed>
       <Dimmed>{props.cell.id}</Dimmed>
-      <Input type="text" onInput={handleInput} value={props.cell.definition.text || ''} />
+      <Input type="text" ref={input} onInput={handleInput} />
     </Boxed>
   )
 }
@@ -98,14 +103,13 @@ const CellHeader: Component<CellHeaderProps> = (props) => {
 
 type CellContentsProps = {
   cell: Cell
-  cellsInRoot: Cell[]
 }
 
 export const CellContents: Component<CellContentsProps> = (props) => {
   return (
     <div class={styles['cell-contents-container']}>
       {props.cell.type === CellType.List ? (
-        <ListCellBody cell={props.cell} cellsInRoot={props.cellsInRoot} />
+        <ListCellBody cell={props.cell} />
       ) : props.cell.type === CellType.Text ? (
         <TextCellBody cell={props.cell} />
       ) : (
@@ -117,14 +121,13 @@ export const CellContents: Component<CellContentsProps> = (props) => {
 
 type HeaderedCellProps = {
   cell: Cell
-  cellsInRoot: Cell[]
 }
 
 const HeaderedCell: Component<HeaderedCellProps> = (props) => {
   return (
     <div class={styles['cell-container']}>
       <CellHeader cell={props.cell} />
-      <CellContents cell={props.cell} cellsInRoot={props.cellsInRoot} />
+      <CellContents cell={props.cell} />
     </div>
   )
 }

@@ -5,7 +5,7 @@ import sqlite3InitModule, {
   Sqlite3Static,
 } from '@sqlite.org/sqlite-wasm'
 
-import { ClientMessage, WorkerMessage } from './types'
+import { ClientMessage, UpdateInfo, WorkerMessage } from './types'
 
 type Sql = string
 
@@ -16,10 +16,10 @@ const sendLog = (...args: string[]) =>
 const sendError = (...args: string[]) =>
   promiseWorker.postMessage({ type: 'error', payload: args.join(' ') } as WorkerMessage)
 
-const sendSubscribedQueryResult = (sql: Sql, rows: unknown[]) =>
+const sendSubscribedQueryResult = (sql: Sql, rows: unknown[], update_info?: UpdateInfo) =>
   promiseWorker.postMessage({
     type: 'subscribed-query-result',
-    payload: { sql, rows },
+    payload: { sql, rows, update_info },
   } as WorkerMessage)
 
 const sendSubscribedQueryError = (sql: Sql, error: string) =>
@@ -30,7 +30,7 @@ const sendSubscribedQueryError = (sql: Sql, error: string) =>
 
 const statements: Record<Sql, PreparedStatement> = {}
 
-const runStatement = (sql: Sql) => {
+const runStatement = (sql: Sql, updateInfo?: UpdateInfo) => {
   try {
     const statement = statements[sql]
     if (!statement) {
@@ -52,7 +52,7 @@ const runStatement = (sql: Sql) => {
       rows.push(statement.get({}))
     }
 
-    sendSubscribedQueryResult(sql, rows)
+    sendSubscribedQueryResult(sql, rows, updateInfo)
   } catch (err: unknown) {
     if (err instanceof Error) {
       sendSubscribedQueryError(sql, err.message)
@@ -139,12 +139,9 @@ const start = function (sqlite3: Sqlite3Static) {
 
   sqlite3.capi.sqlite3_update_hook(
     db,
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (...args: any[]) => {
-      sendLog('Update hook: ', String(args))
-
+    (_bind: number, _op: number, _db: string, table: string, rowid: bigint) => {
       for (const sql in statements) {
-        runStatement(sql)
+        runStatement(sql, { table, rowid })
       }
     },
     null,

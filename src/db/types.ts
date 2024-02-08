@@ -1,5 +1,10 @@
 type Sql = string
 
+export type UpdateInfo = {
+  table: string
+  rowid: bigint
+}
+
 // Message from client to worker
 export type ClientMessage =
   | {
@@ -25,6 +30,7 @@ export type WorkerMessage =
       payload: {
         sql: Sql
         rows: unknown[]
+        update_info?: UpdateInfo
       }
     }
   | {

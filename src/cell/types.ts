@@ -12,6 +12,7 @@ export enum CellType {
 }
 
 export type CellBase = {
+  rowid: string
   id: string
   root_id: string | null
   parent_id: string | null
