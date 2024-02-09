@@ -11,8 +11,8 @@ export enum CellType {
   Portal = 12,
 }
 
-export type CellBase = {
-  rowid: string
+type CellBase = {
+  rowid: bigint
   id: string
   root_id: string | null
   parent_id: string | null
@@ -22,7 +22,7 @@ export type CellBase = {
   updated_at: string
 }
 
-export type TextCellDefinition = {
+type TextCellDefinition = {
   cell_type: CellType.Text
   text: string
 }
@@ -32,7 +32,7 @@ type TextCellBase = CellBase & {
 }
 
 // Cell SQL result before JSON parsing definition
-export type DehydratedTextCell = TextCellBase & {
+type DehydratedTextCell = TextCellBase & {
   definition: string
 }
 
@@ -40,20 +40,20 @@ export type TextCell = TextCellBase & {
   definition: TextCellDefinition
 }
 
-export type ListCellDefinition = {
+type ListCellDefinition = {
   cell_type: CellType.List
 }
 
-export type ListCellBase = CellBase & {
+type ListCellBase = CellBase & {
   type: CellType.List
   definition: ListCellDefinition
 }
 
-export type DehydratedListCell = ListCellBase & {
+type DehydratedListCell = ListCellBase & {
   definition: string
 }
 
-export type ListCell = ListCellBase & {
+type ListCell = ListCellBase & {
   definition: ListCellDefinition
 }
 

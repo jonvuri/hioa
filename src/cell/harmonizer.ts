@@ -7,11 +7,12 @@ import { Cell, DehydratedCell, CellType, CellDefinition } from './types'
 type RowCache<RowType> = {
   rowMap: Record<string, RowType>
   queryState: QueryState<RowType>
+  emit: boolean // Whether or not the latest result is an update that should be emitted
 }
 
 const rowCacheScan =
-  (rowIdKey: string) =>
-  <RowType>(
+  (idKey: string) =>
+  <RowType extends { rowid: bigint }>(
     last: RowCache<RowType> | QueryState<RowType>,
     newQueryState: QueryState<RowType>,
   ): RowCache<RowType> => {
@@ -19,42 +20,69 @@ const rowCacheScan =
     // first time, before the first row cache can be generated)
     const lastRowMap = 'rowMap' in last ? last.rowMap : {}
 
-    // Just pass through if loading or error state
+    // Pass through and always emit, if loading or error state
+    // (Initial QueryState for last will always be loading)
     if (newQueryState.loading || newQueryState.error) {
       return {
         rowMap: lastRowMap,
         queryState: newQueryState,
+        emit: true,
       }
     }
 
     const newRowMap: Record<string, RowType> = {}
+    let emit = !newQueryState.updateInfo // Always emit if there's no update info
 
     if (newQueryState.rows) {
       // Map over rows checking the row cache, reusing the old row if
       // present in order to maintain referential equality
       newQueryState.rows = newQueryState.rows.map((row) => {
-        // TODO: Augment RowType to include rowIdKey as string key
-        const rowId = (row as Record<string, string>)[rowIdKey] as string
+        // If emit not yet set, and there's an update row,
+        // and this row is it, then set emit to true
+        if (!emit && row.rowid) {
+          emit = BigInt(row?.rowid) === newQueryState.updateInfo?.rowid
+        }
 
-        const lastRow = lastRowMap[rowId]
+        // TODO: Augment RowType to include idKey as string key
+        const id = (row as unknown as Record<string, string> & { rowid: bigint })[
+          idKey
+        ] as string
+        const lastRow = lastRowMap[id]
 
         if (lastRow) {
           const newRow = Object.assign(lastRow, row)
 
-          newRowMap[rowId] = newRow
+          newRowMap[id] = newRow
           return newRow
         } else {
-          newRowMap[rowId] = row
+          newRowMap[id] = row
           return row
         }
       })
     }
 
+    // If emit is still not set to true, and there's an update,
+    // also check the last query for the update row. If it's there,
+    // it was just removed, so emit the update
+    if (!emit && newQueryState.updateInfo && 'queryState' in last) {
+      for (const row of last.queryState.rows || []) {
+        if (BigInt(row.rowid) === newQueryState.updateInfo.rowid) {
+          emit = true
+          break
+        }
+      }
+    }
+
     return {
       rowMap: newRowMap,
       queryState: newQueryState,
+      emit,
     }
   }
+
+const rowCacheEmitFilter = <RowType>(
+  rowCache: RowCache<RowType> | QueryState<RowType>,
+): boolean => ('queryState' in rowCache ? rowCache.emit : true)
 
 // Takes in a row cache scan result and emits only the query state
 const rowCacheEmitter = <RowType>(
@@ -92,8 +120,6 @@ const singleResultCacheScan =
         // Use existing row if present to maintain referential equality
         const newResult = Object.assign(last.result, newQueryState.result)
 
-        console.log('(s) found existing row ', rowId)
-
         return {
           sql: newQueryState.sql,
           loading: false,
@@ -116,18 +142,8 @@ const singleResultCacheScan =
     }
   }
 
-// Filter predicate that only lets through query states with new,
-// updated rows, if the query state has update info
-const updateRowsPredicate = <RowType extends { rowid: string }>(
-  newQueryState: QueryState<RowType>,
-): boolean =>
-  !newQueryState.updateInfo ||
-  newQueryState.rows.find(
-    (row) => BigInt(row.rowid) === newQueryState.updateInfo?.rowid,
-  ) !== undefined
-
 // The same kind of filter predicate as above, but for single result query states
-const updateResultPredicate = <ResultType extends { rowid: string }>(
+const resultEmitFilter = <ResultType extends { rowid: bigint }>(
   newQueryState: SingleResultQueryState<ResultType>,
 ): boolean =>
   !newQueryState.updateInfo ||
@@ -215,8 +231,8 @@ export const listRootCells = () =>
     `,
   ).pipe(
     scan<QueryState<Cell>, RowCache<Cell>>(rowCacheScan('id')),
+    filter((rowCache): boolean => rowCacheEmitFilter(rowCache)),
     map(rowCacheEmitter),
-    filter((queryState): boolean => updateRowsPredicate(queryState)),
   )
 
 export const listCellsInRoot = (root_id: string) =>
@@ -274,8 +290,8 @@ export const listCellsInRoot = (root_id: string) =>
       }
     }),
     scan<QueryState<Cell>, RowCache<Cell>>(rowCacheScan('id')),
+    filter((queryState): boolean => rowCacheEmitFilter(queryState)),
     map(rowCacheEmitter),
-    filter((queryState): boolean => updateRowsPredicate(queryState)),
   )
 
 export const getCell = (cell_id: string) => {
@@ -317,7 +333,7 @@ export const getCell = (cell_id: string) => {
       } as SingleResultQueryState<Cell>
     }),
     scan(singleResultCacheScan('id')),
-    filter((queryState): boolean => updateResultPredicate(queryState)),
+    filter((queryState): boolean => resultEmitFilter(queryState)),
   )
 
   return cellQueryState

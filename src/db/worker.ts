@@ -1,3 +1,4 @@
+/* eslint-disable import/no-unused-modules */
 import { PWBWorker } from 'promise-worker-bi'
 import sqlite3InitModule, {
   OpfsDatabase,

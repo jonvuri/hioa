@@ -22,16 +22,6 @@ Cron('*/1 * * * * *', () => {
   console.log('This will run every second')
 })
 
-// Initialize harmonics table on load if it doesn't yet exist
-export const initialize = () =>
-  execSql(`
-    CREATE TABLE IF NOT EXISTS __MatrixHarmonics (
-      matrix_id TEXT,
-      matrix_name TEXT,
-      column_definitions JSON
-    );
-  `)
-
 export const createMatrix = (name: string) => {
   const matrix_id = `__Matrix_${Date.now().toString(16)}`
 

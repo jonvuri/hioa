@@ -80,7 +80,7 @@ const CellLoader: Component<CellLoaderProps> = (props) => {
               {(cellsInRoot) => (
                 <div class={styles.container}>
                   <RootCellHeader cell={cell} />
-                  <CellsInRootContext.Provider value={cellsInRoot()}>
+                  <CellsInRootContext.Provider value={cellsInRoot}>
                     <CellContents cell={cell} />
                   </CellsInRootContext.Provider>
                 </div>

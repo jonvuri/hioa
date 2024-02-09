@@ -1,4 +1,4 @@
-import { Component, For, createContext, onMount, useContext } from 'solid-js'
+import { Accessor, Component, For, createContext, onMount, useContext } from 'solid-js'
 
 import Button from 'solid-surfaces/components/Button'
 import Input from 'solid-surfaces/components/Input'
@@ -7,14 +7,14 @@ import Tagged from 'solid-surfaces/components/stellation/Tagged'
 import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { Subheader } from 'solid-surfaces/components/typo/Header'
 
-import { createCell, updateCellDefinition } from '../harmonizer'
+import { createCell, deleteCell, updateCellDefinition } from '../harmonizer'
 import { Cell, CellType, TextCell } from '../types'
 
 import styles from './Cell.module.sass'
 
 const rootIdForCell = (cell: Cell) => cell.root_id || cell.id
 
-export const CellsInRootContext = createContext<Cell[]>([])
+export const CellsInRootContext = createContext<Accessor<Cell[]>>(() => [])
 
 type ListCellBodyProps = {
   cell: Cell
@@ -44,7 +44,7 @@ const ListCellBody: Component<ListCellBodyProps> = (props) => {
   return (
     <>
       <For
-        each={cellsInRoot.filter((cell) => cell.parent_id === props.cell.id)}
+        each={cellsInRoot().filter((cell) => cell.parent_id === props.cell.id)}
         fallback={<div>[ no cells in list ]</div>}
       >
         {(cell) => <HeaderedCell cell={cell} />}
@@ -68,8 +68,11 @@ const TextCellBody: Component<TextCellBodyProps> = (props) => {
       ...props.cell.definition,
       text: target.value,
     }
-    console.log('Updating cell definition', { cell: props.cell, val: target.value })
     updateCellDefinition(props.cell.id, definition)
+  }
+
+  const handleDelete = () => {
+    deleteCell(props.cell.id)
   }
 
   onMount(() => {
@@ -78,7 +81,10 @@ const TextCellBody: Component<TextCellBodyProps> = (props) => {
 
   return (
     <Boxed>
-      <Dimmed>{props.cell.id}</Dimmed>
+      <div>
+        <Dimmed>{props.cell.id}</Dimmed>
+        <Button onClick={handleDelete}>x</Button>
+      </div>
       <Input type="text" ref={input} onInput={handleInput} />
     </Boxed>
   )

@@ -1,5 +1,6 @@
 /* eslint-disable @typescript-eslint/ban-types */
 /* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable import/no-unused-modules */
 // unofficial sqlite3 types.
 // These are typed only for my scope
 
