@@ -109,7 +109,7 @@ const RootCell: Component<RootCellProps> = (props) => {
           <Button onClick={props.onClose}>Close</Button>
         </div>
       </Grid>
-      <Grid full classList={{ [styles['grid-container']!]: true }}>
+      <Grid full>
         <Transition name="matrix-fade">
           <CellLoader cell_id={props.cell_id()} />
         </Transition>

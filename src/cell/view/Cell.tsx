@@ -2,10 +2,9 @@ import { Accessor, Component, For, createContext, onMount, useContext } from 'so
 
 import Button from 'solid-surfaces/components/Button'
 import Input from 'solid-surfaces/components/Input'
-import Boxed from 'solid-surfaces/components/stellation/Boxed'
-import Tagged from 'solid-surfaces/components/stellation/Tagged'
 import { Dimmed } from 'solid-surfaces/components/typo/Color'
-import { Subheader } from 'solid-surfaces/components/typo/Header'
+import { GutterHeader } from 'solid-surfaces/components/typo/Header'
+import Tagged from 'solid-surfaces/components/stellation/Tagged'
 
 import { createCell, deleteCell, updateCellDefinition } from '../harmonizer'
 import { Cell, CellType, TextCell } from '../types'
@@ -43,14 +42,18 @@ const ListCellBody: Component<ListCellBodyProps> = (props) => {
 
   return (
     <>
-      <For
-        each={cellsInRoot().filter((cell) => cell.parent_id === props.cell.id)}
-        fallback={<div>[ no cells in list ]</div>}
-      >
-        {(cell) => <HeaderedCell cell={cell} />}
-      </For>
-      <Button onClick={addListCell}>Add list cell</Button>
-      <Button onClick={addTextCell}>Add text cell</Button>
+      <div class={styles['list-cell']}>
+        <For
+          each={cellsInRoot().filter((cell) => cell.parent_id === props.cell.id)}
+          fallback={<div>[ no cells in list ]</div>}
+        >
+          {(cell) => <HeaderedCell cell={cell} />}
+        </For>
+      </div>
+      <div class={styles['list-cell-toolbar']}>
+        <Button onClick={addListCell}>Add list cell</Button>
+        <Button onClick={addTextCell}>Add text cell</Button>
+      </div>
     </>
   )
 }
@@ -71,23 +74,11 @@ const TextCellBody: Component<TextCellBodyProps> = (props) => {
     updateCellDefinition(props.cell.id, definition)
   }
 
-  const handleDelete = () => {
-    deleteCell(props.cell.id)
-  }
-
   onMount(() => {
     input!.value = props.cell.definition.text
   })
 
-  return (
-    <Boxed>
-      <div>
-        <Dimmed>{props.cell.id}</Dimmed>
-        <Button onClick={handleDelete}>x</Button>
-      </div>
-      <Input type="text" ref={input} onInput={handleInput} />
-    </Boxed>
-  )
+  return <Input type="text" ref={input} onInput={handleInput} />
 }
 
 type CellHeaderProps = {
@@ -95,15 +86,23 @@ type CellHeaderProps = {
 }
 
 const CellHeader: Component<CellHeaderProps> = (props) => {
+  const handleDelete = () => {
+    deleteCell(props.cell.id)
+  }
+
   return (
-    <Tagged>
-      <div class={styles['cell-header-container']}>
-        <div style={{ display: 'flex' }}>
-          <Subheader margin={false}>{props.cell.name}</Subheader>{' '}
-          <Dimmed>[{props.cell.id}]</Dimmed>
-        </div>
+    <div class={styles['cell-header-container']}>
+      <div class={styles['cell-header-title']}>
+        <GutterHeader margin={false} classList={{ [styles['cell-title']!]: true }}>
+          {props.cell.name}
+        </GutterHeader>
+        &nbsp;&nbsp;
+        <Dimmed>[{props.cell.id}]</Dimmed>
       </div>
-    </Tagged>
+      <div>
+        <Button onClick={handleDelete}>x</Button>
+      </div>
+    </div>
   )
 }
 
@@ -131,9 +130,9 @@ type HeaderedCellProps = {
 
 const HeaderedCell: Component<HeaderedCellProps> = (props) => {
   return (
-    <div class={styles['cell-container']}>
+    <Tagged classList={{ [styles['cell-container']!]: true }} topLeft>
       <CellHeader cell={props.cell} />
       <CellContents cell={props.cell} />
-    </div>
+    </Tagged>
   )
 }
