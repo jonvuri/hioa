@@ -36,6 +36,7 @@
     "solid-js": "^1.8.12",
     "solid-surfaces": "../surfaces/solid-surfaces",
     "solid-transition-group": "^0.2.3",
+    "sqlite-parser": "^1.0.1",
     "surface-fonts": "../surfaces/surface-fonts"
   }
 }

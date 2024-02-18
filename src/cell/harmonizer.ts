@@ -1,7 +1,15 @@
 import { filter, map, scan } from 'rxjs'
 
 import { execSql, getObservable, QueryState, SingleResultQueryState } from '../db/client'
-import { Cell, DehydratedCell, CellType, CellDefinition } from './types'
+import {
+  Cell,
+  DehydratedCell,
+  CellType,
+  CellDefinition,
+  MatrixCell,
+  MatrixCellDefinition,
+  Row,
+} from './types'
 
 // TODO: Add extends rowid to RowType and enforce in sql strings somehow too
 type RowCache<RowType> = {
@@ -174,6 +182,10 @@ export const createCell = (
   root_id: string | null,
   name?: string,
 ) => {
+  if (cell_type === CellType.Matrix) {
+    return createMatrixCell(parent_id, root_id, name)
+  }
+
   const cell_id = `__cell_${Date.now().toString(16)}`
 
   return execSql(
@@ -208,11 +220,158 @@ export const createCell = (
   )
 }
 
-export const deleteCell = (cell_id: string) =>
-  execSql(`
+export const deleteCell = (cell: Cell) => {
+  if (cell.type === CellType.Matrix) {
+    return deleteMatrixCell(cell)
+  }
+
+  return execSql(
+    `
     DELETE FROM __cell
-    WHERE id = '${cell_id}';
-  `)
+    WHERE id = $cell_id;
+  `,
+    {
+      $cell_id: cell.id,
+    },
+  )
+}
+
+const createMatrixCell = (
+  parent_id: string | null,
+  root_id: string | null,
+  name?: string,
+) => {
+  const cell_type = CellType.Matrix
+  const now = Date.now().toString(16)
+  const cell_id = `__cell_${now}`
+  const matrix_id = `__matrix_${now}`
+  const definition: MatrixCellDefinition = {
+    cell_type,
+    matrix_id,
+    column_definitions: [],
+  }
+
+  // Create the matrix table as well as its owner cell
+  return execSql(
+    `
+      BEGIN;
+  
+      CREATE TABLE IF NOT EXISTS ${matrix_id} (
+        rowid INTEGER PRIMARY KEY
+      );
+
+      INSERT INTO __cell (
+        id,
+        root_id,
+        parent_id,
+        name,
+        type,
+        definition,
+        created_at,
+        updated_at
+      ) VALUES (
+        $cell_id,
+        $root_id,
+        $parent_id,
+        $name,
+        $cell_type,
+        $definition,
+        datetime('now'),
+        datetime('now')
+      );
+  
+      COMMIT;
+    `,
+    {
+      $cell_id: cell_id,
+      $root_id: root_id,
+      $parent_id: parent_id,
+      $name: name,
+      $cell_type: cell_type,
+      $definition: JSON.stringify(definition),
+    },
+  )
+}
+
+const deleteMatrixCell = (cell: MatrixCell) =>
+  // Delete the matrix table as well as its owner cell
+  execSql(
+    `
+    BEGIN;
+
+    DROP TABLE ${cell.definition.matrix_id};
+
+    DELETE FROM __cell
+    WHERE id = $cell_id;
+
+    COMMIT;
+  `,
+    {
+      $cell_id: cell.id,
+    },
+  )
+
+// Only text column types currently
+export const addMatrixColumn = (
+  cell: MatrixCell,
+  column_key: string,
+  column_name: string,
+) =>
+  // Add the column to the matrix table, and then update the
+  // matrix column definitions stored in the owner cell
+  execSql(
+    `
+    BEGIN;
+
+    ALTER TABLE ${cell.definition.matrix_id}
+    ADD COLUMN ${column_key} TEXT;
+
+    UPDATE __cell
+    SET definition = json_insert(
+      definition,
+      '$.column_definitions[#]',
+      json($column_definition)
+    )
+    WHERE id = $cell_id;
+
+    COMMIT;
+  `,
+    {
+      $cell_id: cell.id,
+      $column_definition: JSON.stringify({ key: column_key, name: column_name }),
+    },
+  )
+
+export const insertMatrixRow = (
+  matrix_id: string,
+  column_keys: string[],
+  values: unknown[],
+) =>
+  execSql(
+    `
+      INSERT INTO ${matrix_id} (
+        ${column_keys.join(',')}
+      )
+      VALUES (
+        ${column_keys.map(() => '?').join(',')}
+      );
+    `,
+    values,
+  )
+
+export const getMatrixRows = (matrix_id: string) =>
+  getObservable<Row>(
+    `
+        SELECT
+          *
+        FROM
+          ${matrix_id};
+      `,
+  ).pipe(
+    scan<QueryState<Row>, RowCache<Row>>(rowCacheScan('rowid')),
+    filter((rowCache): boolean => rowCacheEmitFilter(rowCache)),
+    map(rowCacheEmitter),
+  )
 
 export const listRootCells = () =>
   getObservable<Cell>(

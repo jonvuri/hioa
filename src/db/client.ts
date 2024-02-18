@@ -1,5 +1,7 @@
-import { BehaviorSubject, Observable, share } from 'rxjs'
 import { PWBHost } from 'promise-worker-bi'
+import { BehaviorSubject, Observable, share } from 'rxjs'
+import sqliteParser from 'sqlite-parser'
+import type { SqliteStatement } from 'sqlite-parser'
 
 import DbWorker from './worker?worker'
 
@@ -9,6 +11,7 @@ const worker = new DbWorker()
 const promiseWorker = new PWBHost(worker)
 
 type Sql = string
+type TableName = string
 
 // TODO: Add query state wrapper
 type UnreifiedRow = Record<string, unknown>
@@ -22,16 +25,141 @@ type QueryResult = {
 
 type ListenerCallback = (rows: QueryResult) => void
 
-const workerListeners: Record<Sql, ListenerCallback> = {}
+const sqlListenerMap: Record<Sql, ListenerCallback> = {}
+const tableSqlMap: Record<TableName, Set<Sql>> = {}
+
+const getSelectFromTables = (ast: SqliteStatement) => {
+  const tables = new Set<string>()
+
+  const visit = (node: SqliteStatement) => {
+    if (node.type === 'statement' && node.variant === 'list') {
+      for (const statement of node.statement) {
+        visit(statement)
+      }
+    } else if (node.type === 'statement' && node.variant === 'select') {
+      if (node.from.variant === 'table') {
+        tables.add(node.from.name)
+      } else if (node.from.type === 'map') {
+        tables.add(node.from.source.name)
+        for (const join of node.from.map) {
+          tables.add(join.source.name)
+        }
+      }
+    }
+    // Nothing else, this function only visits SELECTS
+  }
+
+  visit(ast)
+
+  return tables
+}
+
+const getDropTables = (ast: SqliteStatement) => {
+  const tables = new Set<string>()
+
+  const visit = (node: SqliteStatement) => {
+    if (node.type === 'statement' && node.variant === 'list') {
+      for (const statement of node.statement) {
+        visit(statement)
+      }
+    } else if (node.type === 'statement' && node.variant === 'drop') {
+      tables.add(node.target.name)
+    }
+    // Nothing else, this function only visits DROP TABLES
+  }
+
+  visit(ast)
+
+  return tables
+}
+
+const logSql = (message: string, sql: Sql) => {
+  console.log(`${message}: ${sql.replace(/\s+/g, ' ')}`)
+}
+
+const addListener = (sql: Sql, listener: ListenerCallback) => {
+  logSql('Adding listener for', sql)
+
+  if (sqlListenerMap[sql]) {
+    // TODO: Only throw in dev mode, otherwise just log
+    throw new Error(`Tried to add a listener for '${sql}', but one already exists`)
+  }
+
+  const fromTables = getSelectFromTables(sqliteParser(sql))
+
+  sqlListenerMap[sql] = listener
+
+  for (const table of fromTables) {
+    let tableListeners = tableSqlMap[table]
+
+    if (!tableListeners) {
+      tableListeners = new Set()
+      tableSqlMap[table] = tableListeners
+    }
+
+    tableListeners.add(sql)
+  }
+
+  return promiseWorker.postMessage({ type: 'subscribe', payload: sql } as ClientMessage)
+}
+
+const removeListener = (sql: Sql) => {
+  logSql('Removing listener for', sql)
+
+  delete sqlListenerMap[sql]
+
+  const fromTables = getSelectFromTables(sqliteParser(sql))
+
+  for (const table of fromTables) {
+    const tableListeners = tableSqlMap[table]
+
+    if (tableListeners) {
+      tableListeners.delete(sql)
+
+      if (tableListeners.size === 0) {
+        delete tableSqlMap[table]
+      }
+    }
+  }
+
+  return promiseWorker.postMessage({ type: 'unsubscribe', payload: sql } as ClientMessage)
+}
+
+const removeAllTableListeners = (table: TableName) => {
+  console.log(`Removing all listeners for table: ${table}`)
+
+  const promises = []
+
+  const tableListeners = tableSqlMap[table]
+  if (tableListeners) {
+    for (const sql of tableListeners) {
+      delete sqlListenerMap[sql]
+      promises.push(
+        promiseWorker.postMessage({ type: 'unsubscribe', payload: sql } as ClientMessage),
+      )
+    }
+  }
+
+  delete tableSqlMap[table]
+
+  return Promise.all(promises)
+}
 
 const notifyListener = (sql: Sql, result: QueryResult) => {
-  const listener = workerListeners[sql]
+  const listener = sqlListenerMap[sql]
 
   if (listener) {
     listener(result)
   } else {
     // TODO: Only throw in dev mode, otherwise just log
     throw new Error(`Got subscribed rows for '${sql}', but there is no listener`)
+  }
+}
+
+const checkForTableDeletes = (sql: Sql) => {
+  const fromTables = getDropTables(sqliteParser(sql))
+  for (const table of fromTables) {
+    removeAllTableListeners(table)
   }
 }
 
@@ -91,12 +219,7 @@ const sqlObservables: Record<Sql, Observable<QueryState<UnreifiedRow>>> = {}
 
 const createObservable = (sql: Sql) =>
   new Observable<QueryState<UnreifiedRow>>((subscribe) => {
-    if (workerListeners[sql]) {
-      // TODO: Only throw in dev mode, otherwise just log
-      throw new Error(`Tried to add a listener for '${sql}', but one already exists`)
-    }
-
-    workerListeners[sql] = (result) => {
+    const listener: ListenerCallback = (result) => {
       if (result.error) {
         subscribe.next({
           sql,
@@ -119,12 +242,10 @@ const createObservable = (sql: Sql) =>
       }
     }
 
-    promiseWorker.postMessage({ type: 'subscribe', payload: sql } as ClientMessage)
+    addListener(sql, listener)
 
     return () => {
-      delete workerListeners[sql]
-
-      promiseWorker.postMessage({ type: 'unsubscribe', payload: sql } as ClientMessage)
+      removeListener(sql)
     }
   }).pipe(
     share({
@@ -191,6 +312,10 @@ export const execSql = async (
   sql: string,
   bindParams?: unknown[] | Record<string, unknown>,
 ): Promise<ExecResults> => {
+  logSql('Executing', sql)
+
+  checkForTableDeletes(sql)
+
   return promiseWorker.postMessage({
     type: 'query',
     payload: {

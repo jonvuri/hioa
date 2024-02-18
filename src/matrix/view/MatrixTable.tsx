@@ -22,15 +22,15 @@ type ColumnSpec = {
   name: string
 }
 
-declare module '@tanstack/solid-table' {
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  interface TableMeta<TData extends RowData> {
-    rowSelection: RowSelection
-    selectRow: (rowId: RowId) => void
-    deselectRow: (rowId: RowId) => void
-    updateCell: (rowId: RowId, columnId: ColumnId, value: unknown) => void
-  }
-}
+// declare module '@tanstack/solid-table' {
+//   // eslint-disable-next-line @typescript-eslint/no-unused-vars
+//   interface TableMeta<TData extends RowData> {
+//     rowSelection: RowSelection
+//     selectRow: (rowId: RowId) => void
+//     deselectRow: (rowId: RowId) => void
+//     updateCell: (rowId: RowId, columnId: ColumnId, value: unknown) => void
+//   }
+// }
 
 const SelectionCell = (props: CellContext<Row, unknown>) => {
   const selection = props.table.options.meta?.rowSelection?.()

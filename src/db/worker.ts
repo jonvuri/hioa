@@ -64,14 +64,13 @@ const runStatement = (sql: Sql, updateInfo?: UpdateInfo) => {
 }
 
 // TODO: Parse SQL to determine which tables are being queried and only subscribe to those
+// Or take in list of tables from client
 const addStatement = (db: OpfsDatabase, sql: Sql) => {
   if (statements[sql]) {
     return
   }
 
   statements[sql] = db.prepare(sql)
-  sendLog('Added statement: ', sql)
-  sendLog('Statements: \n', Object.keys(statements).join('\n'))
 }
 
 const removeStatement = (sql: Sql) => {
@@ -84,12 +83,6 @@ const removeStatement = (sql: Sql) => {
   delete statements[sql]
 
   statement.finalize()
-  sendLog('Removed statement: ', sql)
-  if (Object.keys(statements).length === 0) {
-    sendLog('No more statements')
-  } else {
-    sendLog('Statements: \n', Object.keys(statements).join('\n'))
-  }
 }
 
 let dbReady: (db: OpfsDatabase) => void = () => {

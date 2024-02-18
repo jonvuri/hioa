@@ -1,7 +1,7 @@
 export enum CellType {
   // Parent types
   List = 1,
-  Table = 2,
+  Matrix = 2,
   Outline = 3,
   Canvas = 4,
   Dashboard = 5,
@@ -22,6 +22,7 @@ type CellBase = {
   updated_at: string
 }
 
+// == TEXT CELL ==
 type TextCellDefinition = {
   cell_type: CellType.Text
   text: string
@@ -40,6 +41,7 @@ export type TextCell = TextCellBase & {
   definition: TextCellDefinition
 }
 
+// == LIST CELL ==
 type ListCellDefinition = {
   cell_type: CellType.List
 }
@@ -57,8 +59,44 @@ type ListCell = ListCellBase & {
   definition: ListCellDefinition
 }
 
-export type CellDefinition = TextCellDefinition | ListCellDefinition
+// == MATRIX CELL ==
+type MatrixColumnDefinition = {
+  key: string
+  name: string
+  // Just text type value for now
+}
 
-export type DehydratedCell = DehydratedTextCell | DehydratedListCell
+export type MatrixCellDefinition = {
+  cell_type: CellType.Matrix
+  matrix_id: string
+  column_definitions: MatrixColumnDefinition[]
+}
 
-export type Cell = TextCell | ListCell
+type MatrixCellBase = CellBase & {
+  type: CellType.Matrix
+  definition: MatrixCellDefinition
+}
+
+type DehydratedMatrixCell = MatrixCellBase & {
+  definition: string
+}
+
+export type MatrixCell = MatrixCellBase & {
+  definition: MatrixCellDefinition
+}
+
+export type CellDefinition =
+  | TextCellDefinition
+  | ListCellDefinition
+  | MatrixCellDefinition
+
+export type DehydratedCell =
+  | DehydratedTextCell
+  | DehydratedListCell
+  | DehydratedMatrixCell
+
+export type Cell = TextCell | ListCell | MatrixCell
+
+type ColumnData = string | number | boolean | null | undefined
+
+export type Row = Record<string, ColumnData> & { rowid: bigint }

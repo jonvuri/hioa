@@ -35,6 +35,9 @@ dependencies:
   solid-transition-group:
     specifier: ^0.2.3
     version: 0.2.3(solid-js@1.8.12)
+  sqlite-parser:
+    specifier: ^1.0.1
+    version: 1.0.1
   surface-fonts:
     specifier: ../surfaces/surface-fonts
     version: link:../surfaces/surface-fonts
@@ -2738,6 +2741,12 @@ packages:
     resolution: {integrity: sha512-R0XvVJ9WusLiqTCEiGCmICCMplcCkIwwR11mOSD9CR5u+IXYdiseeEuXCVAjS54zqwkLcPNnmU4OeJ6tUrWhDw==}
     engines: {node: '>=0.10.0'}
     dev: true
+
+  /sqlite-parser@1.0.1:
+    resolution: {integrity: sha512-/es+YmgQG+VFbwAQD0Nd0Mdzgky8rW3M85zcy2+Vtk3Sj5ydaMl/lopWPehsjsByGw/swVuXSBeMJFh47doRUw==}
+    engines: {node: '>=4'}
+    hasBin: true
+    dev: false
 
   /string.prototype.trim@1.2.8:
     resolution: {integrity: sha512-lfjY4HcixfQXOfaqCvcBuOIapyaroTXhbkfJN3gcB1OtyupngWK4sEET9Knd0cXd28kTUqu/kHoV4HKSJdnjiQ==}

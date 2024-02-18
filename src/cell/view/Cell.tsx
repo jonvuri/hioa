@@ -1,4 +1,12 @@
-import { Accessor, Component, For, createContext, onMount, useContext } from 'solid-js'
+import {
+  Accessor,
+  Component,
+  For,
+  createContext,
+  createMemo,
+  onMount,
+  useContext,
+} from 'solid-js'
 
 import Button from 'solid-surfaces/components/Button'
 import Input from 'solid-surfaces/components/Input'
@@ -6,6 +14,7 @@ import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { GutterHeader } from 'solid-surfaces/components/typo/Header'
 import Tagged from 'solid-surfaces/components/stellation/Tagged'
 
+import MatrixCell from './MatrixCell'
 import { createCell, deleteCell, updateCellDefinition } from '../harmonizer'
 import { Cell, CellType, TextCell } from '../types'
 
@@ -40,19 +49,30 @@ const ListCellBody: Component<ListCellBodyProps> = (props) => {
     )
   }
 
+  const addMatrixCell = () => {
+    createCell(
+      CellType.Matrix,
+      props.cell.id,
+      rootIdForCell(props.cell),
+      `matrix cell * ${cellsInRoot.length + 1}`,
+    )
+  }
+
+  const listCells = createMemo(() =>
+    cellsInRoot().filter((cell) => cell.parent_id === props.cell.id),
+  )
+
   return (
     <>
       <div class={styles['list-cell']}>
-        <For
-          each={cellsInRoot().filter((cell) => cell.parent_id === props.cell.id)}
-          fallback={<div>[ no cells in list ]</div>}
-        >
+        <For each={listCells()} fallback={<div>[ no cells in list ]</div>}>
           {(cell) => <HeaderedCell cell={cell} />}
         </For>
       </div>
       <div class={styles['list-cell-toolbar']}>
         <Button onClick={addListCell}>Add list cell</Button>
         <Button onClick={addTextCell}>Add text cell</Button>
+        <Button onClick={addMatrixCell}>Add matrix cell</Button>
       </div>
     </>
   )
@@ -87,7 +107,7 @@ type CellHeaderProps = {
 
 const CellHeader: Component<CellHeaderProps> = (props) => {
   const handleDelete = () => {
-    deleteCell(props.cell.id)
+    deleteCell(props.cell)
   }
 
   return (
@@ -117,6 +137,8 @@ export const CellContents: Component<CellContentsProps> = (props) => {
         <ListCellBody cell={props.cell} />
       ) : props.cell.type === CellType.Text ? (
         <TextCellBody cell={props.cell} />
+      ) : props.cell.type === CellType.Matrix ? (
+        <MatrixCell cell={props.cell} />
       ) : (
         <div>[ unknown cell type ]</div>
       )}
@@ -128,11 +150,9 @@ type HeaderedCellProps = {
   cell: Cell
 }
 
-const HeaderedCell: Component<HeaderedCellProps> = (props) => {
-  return (
-    <Tagged classList={{ [styles['cell-container']!]: true }} topLeft>
-      <CellHeader cell={props.cell} />
-      <CellContents cell={props.cell} />
-    </Tagged>
-  )
-}
+const HeaderedCell: Component<HeaderedCellProps> = (props) => (
+  <Tagged classList={{ [styles['cell-container']!]: true }} topLeft>
+    <CellHeader cell={props.cell} />
+    <CellContents cell={props.cell} />
+  </Tagged>
+)
