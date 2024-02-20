@@ -1,34 +1,26 @@
-import {
-  Accessor,
-  Component,
-  For,
-  createContext,
-  createMemo,
-  onMount,
-  useContext,
-} from 'solid-js'
+import { Accessor, Component, For, createContext, createMemo, useContext } from 'solid-js'
 
 import Button from 'solid-surfaces/components/Button'
-import Input from 'solid-surfaces/components/Input'
 import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { GutterHeader } from 'solid-surfaces/components/typo/Header'
 import Tagged from 'solid-surfaces/components/stellation/Tagged'
 
-import MatrixCell from './MatrixCell'
-import { createCell, deleteCell, updateCellDefinition } from '../harmonizer'
-import { Cell, CellType, TextCell } from '../types'
+import MatrixCell from './leaves/MatrixCell'
+import TextCell from './leaves/TextCell'
+import { createCell, deleteCell } from '../harmonizer'
+import { Cell, CellType } from '../types'
 
-import styles from './Cell.module.sass'
+import styles from './BranchCell.module.sass'
 
 const rootIdForCell = (cell: Cell) => cell.root_id || cell.id
 
 export const CellsInRootContext = createContext<Accessor<Cell[]>>(() => [])
 
-type ListCellBodyProps = {
+type ListCellProps = {
   cell: Cell
 }
 
-const ListCellBody: Component<ListCellBodyProps> = (props) => {
+const ListCell: Component<ListCellProps> = (props) => {
   const cellsInRoot = useContext(CellsInRootContext)
 
   const addListCell = () => {
@@ -66,7 +58,7 @@ const ListCellBody: Component<ListCellBodyProps> = (props) => {
     <>
       <div class={styles['list-cell']}>
         <For each={listCells()} fallback={<div>[ no cells in list ]</div>}>
-          {(cell) => <HeaderedCell cell={cell} />}
+          {(cell) => <BranchCell cell={cell} />}
         </For>
       </div>
       <div class={styles['list-cell-toolbar']}>
@@ -76,29 +68,6 @@ const ListCellBody: Component<ListCellBodyProps> = (props) => {
       </div>
     </>
   )
-}
-
-type TextCellBodyProps = {
-  cell: TextCell
-}
-
-const TextCellBody: Component<TextCellBodyProps> = (props) => {
-  let input: HTMLInputElement | undefined
-
-  const handleInput = (e: Event) => {
-    const target = e.target as HTMLInputElement
-    const definition = {
-      ...props.cell.definition,
-      text: target.value,
-    }
-    updateCellDefinition(props.cell.id, definition)
-  }
-
-  onMount(() => {
-    input!.value = props.cell.definition.text
-  })
-
-  return <Input type="text" ref={input} onInput={handleInput} />
 }
 
 type CellHeaderProps = {
@@ -134,9 +103,9 @@ export const CellContents: Component<CellContentsProps> = (props) => {
   return (
     <div class={styles['cell-contents-container']}>
       {props.cell.type === CellType.List ? (
-        <ListCellBody cell={props.cell} />
+        <ListCell cell={props.cell} />
       ) : props.cell.type === CellType.Text ? (
-        <TextCellBody cell={props.cell} />
+        <TextCell cell={props.cell} />
       ) : props.cell.type === CellType.Matrix ? (
         <MatrixCell cell={props.cell} />
       ) : (
@@ -146,11 +115,11 @@ export const CellContents: Component<CellContentsProps> = (props) => {
   )
 }
 
-type HeaderedCellProps = {
+type BranchCellProps = {
   cell: Cell
 }
 
-const HeaderedCell: Component<HeaderedCellProps> = (props) => (
+const BranchCell: Component<BranchCellProps> = (props) => (
   <Tagged classList={{ [styles['cell-container']!]: true }} topLeft>
     <CellHeader cell={props.cell} />
     <CellContents cell={props.cell} />

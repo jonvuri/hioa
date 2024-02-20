@@ -17,8 +17,8 @@ import {
 
 // import CellInput from './CellInput'
 // import RowInput from './RowInput'
-import { addMatrixColumn, getMatrixRows, insertMatrixRow } from '../harmonizer'
-import { Row, MatrixCell as MatrixCellType } from '../types'
+import { addMatrixColumn, getMatrixRows, insertMatrixRow } from '../../harmonizer'
+import { Row, MatrixCell as MatrixCellType } from '../../types'
 
 import styles from './MatrixCell.module.sass'
 import Button from 'solid-surfaces/components/Button'

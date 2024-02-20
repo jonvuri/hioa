@@ -10,7 +10,7 @@ import Tagged from 'solid-surfaces/components/stellation/Tagged'
 import { Dimmed, Shimmer } from 'solid-surfaces/components/typo/Color'
 import { ContrastHeader, Header } from 'solid-surfaces/components/typo/Header'
 
-import { CellContents, CellsInRootContext } from './Cell'
+import { CellContents, CellsInRootContext } from './BranchCell'
 
 import { Cell } from '../types'
 
