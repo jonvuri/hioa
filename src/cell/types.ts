@@ -60,7 +60,7 @@ type ListCell = ListCellBase & {
 }
 
 // == MATRIX CELL ==
-type MatrixColumnDefinition = {
+export type MatrixColumnDefinition = {
   key: string
   name: string
   // Just text type value for now
