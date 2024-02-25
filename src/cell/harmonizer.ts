@@ -359,6 +359,21 @@ export const insertMatrixRow = (
     values,
   )
 
+export const updateMatrixRow = (
+  matrix_id: string,
+  row_id: string,
+  column_id: string,
+  value: unknown,
+) =>
+  execSql(
+    `
+      UPDATE ${matrix_id}
+      SET ${column_id} = $value
+      WHERE rowid = $row_id;
+    `,
+    { $value: value, $row_id: row_id },
+  )
+
 export const getMatrixRows = (matrix_id: string) =>
   getObservable<Row>(
     `

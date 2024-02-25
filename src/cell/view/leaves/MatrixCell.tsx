@@ -14,14 +14,14 @@ import {
   CellContext,
   RowData,
 } from '@tanstack/solid-table'
+import Button from 'solid-surfaces/components/Button'
 
-// import CellInput from './CellInput'
+import CellInput from './matrix/CellInput'
 import RowInput from './matrix/RowInput'
-import { addMatrixColumn, getMatrixRows } from '../../harmonizer'
+import { addMatrixColumn, getMatrixRows, updateMatrixRow } from '../../harmonizer'
 import { Row, MatrixCell as MatrixCellType, MatrixColumnDefinition } from '../../types'
 
 import styles from './MatrixCell.module.sass'
-import Button from 'solid-surfaces/components/Button'
 
 declare module '@tanstack/solid-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -31,14 +31,12 @@ declare module '@tanstack/solid-table' {
 }
 
 const DataCell = (props: CellContext<Row, unknown>) => (
-  <div>{String(props.getValue())}</div>
-  // TODO
-  // <CellInput
-  //   value={String(props.getValue())}
-  //   onCommit={(value) => {
-  //     props.table.options.meta?.updateCell(props.row.id, props.column.id, value)
-  //   }}
-  // />
+  <CellInput
+    value={String(props.getValue())}
+    onCommit={(value) => {
+      props.table.options.meta?.updateCell(props.row.id, props.column.id, value)
+    }}
+  />
 )
 
 type ColumnDef = {
@@ -83,11 +81,10 @@ const MatrixCell: Component<MatrixCellProps> = (props) => {
       },
       columns: tableColumnDefs(),
       getCoreRowModel: getCoreRowModel(),
-      getRowId: (row) => String(row['rowid']) as string,
+      getRowId: (row) => String(row['rowid']) as string, // TODO: Global constant for rowid, just to track usage
       meta: {
         updateCell: (rowId: string, columnId: string, value: unknown) => {
-          // TODO
-          console.log('updateCell', rowId, columnId, value)
+          updateMatrixRow(matrix_id(), rowId, columnId, value)
         },
       },
     }),
