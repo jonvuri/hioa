@@ -99,4 +99,7 @@ export type Cell = TextCell | ListCell | MatrixCell
 
 type ColumnData = string | number | boolean | null | undefined
 
-export type Row = Record<string, ColumnData> & { rowid: bigint }
+// TODO: audit for bigint vs string, should be just bigint ideally
+export type RowId = bigint | string
+
+export type Row = Record<string, ColumnData> & { rowid: RowId }

@@ -2,6 +2,7 @@ import { createSignal } from 'solid-js'
 import Input from 'solid-surfaces/components/Input'
 import Boxed from 'solid-surfaces/components/stellation/Boxed'
 
+import cellStyles from './Cell.module.sass'
 import styles from './CellInput.module.sass'
 
 type CellInputProps = {
@@ -21,7 +22,7 @@ const CellInput = (props: CellInputProps) => {
 
   return (
     <Boxed
-      classList={{ [styles['cell']!]: true, [styles['cell-container']!]: true }}
+      classList={{ [cellStyles['cell']!]: true, [styles['cell-container']!]: true }}
       onClick={() => {
         inputRef.focus()
       }}

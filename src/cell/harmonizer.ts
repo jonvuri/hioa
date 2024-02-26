@@ -9,6 +9,7 @@ import {
   MatrixCell,
   MatrixCellDefinition,
   Row,
+  RowId,
 } from './types'
 
 // TODO: Add extends rowid to RowType and enforce in sql strings somehow too
@@ -20,7 +21,7 @@ type RowCache<RowType> = {
 
 const rowCacheScan =
   (idKey: string) =>
-  <RowType extends { rowid: bigint }>(
+  <RowType extends { rowid: RowId }>(
     last: RowCache<RowType> | QueryState<RowType>,
     newQueryState: QueryState<RowType>,
   ): RowCache<RowType> => {
@@ -361,7 +362,7 @@ export const insertMatrixRow = (
 
 export const updateMatrixRow = (
   matrix_id: string,
-  row_id: string,
+  row_id: RowId,
   column_id: string,
   value: unknown,
 ) =>
@@ -372,6 +373,25 @@ export const updateMatrixRow = (
       WHERE rowid = $row_id;
     `,
     { $value: value, $row_id: row_id },
+  )
+
+// Not used yet
+// export const deleteMatrixRow = (matrix_id: string, row_id: RowId) =>
+//   execSql(
+//     `
+//       DELETE FROM ${matrix_id}
+//       WHERE rowid = $row_id;
+//     `,
+//     { $row_id: row_id },
+//   )
+
+export const deleteMatrixRows = (matrix_id: string, row_ids: RowId[]) =>
+  execSql(
+    `
+      DELETE FROM ${matrix_id}
+      WHERE rowid IN (${row_ids.map(() => '?').join(', ')});
+    `,
+    row_ids,
   )
 
 export const getMatrixRows = (matrix_id: string) =>

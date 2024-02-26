@@ -17,17 +17,43 @@ import {
 import Button from 'solid-surfaces/components/Button'
 
 import CellInput from './matrix/CellInput'
+import CellSelect from './matrix/CellSelect'
 import RowInput from './matrix/RowInput'
+import { useRowSelection, RowSelection } from './matrix/selection'
 import { addMatrixColumn, getMatrixRows, updateMatrixRow } from '../../harmonizer'
-import { Row, MatrixCell as MatrixCellType, MatrixColumnDefinition } from '../../types'
+import {
+  Row,
+  RowId,
+  MatrixCell as MatrixCellType,
+  MatrixColumnDefinition,
+} from '../../types'
 
 import styles from './MatrixCell.module.sass'
 
 declare module '@tanstack/solid-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TableMeta<TData extends RowData> {
-    updateCell: (rowId: string, columnId: string, value: unknown) => void
+    rowSelection: RowSelection
+    selectRow: (rowId: RowId) => void
+    deselectRow: (rowId: RowId) => void
+    updateCell: (rowId: RowId, columnId: string, value: unknown) => void
   }
+}
+
+const SelectionCell = (props: CellContext<Row, unknown>) => {
+  const selection = () => props.table.options.meta?.rowSelection?.()
+  return (
+    <CellSelect
+      value={selection()?.[props.row.id] || false}
+      onChange={(value) => {
+        if (value) {
+          props.table.options.meta?.selectRow(props.row.id)
+        } else {
+          props.table.options.meta?.deselectRow(props.row.id)
+        }
+      }}
+    />
+  )
 }
 
 const DataCell = (props: CellContext<Row, unknown>) => (
@@ -57,15 +83,16 @@ const MatrixCell: Component<MatrixCellProps> = (props) => {
     setColumnDefs(props.cell.definition.column_definitions)
   })
 
-  const tableColumnDefs = createMemo(() =>
-    columnDefs().map(
+  const tableColumnDefs = createMemo(() => [
+    { header: 'selection', accessorKey: 'selection', cell: SelectionCell },
+    ...columnDefs().map(
       (column): ColumnDef => ({
         accessorKey: column.key,
         header: column.name,
         cell: DataCell,
       }),
     ),
-  )
+  ])
 
   const queryState = createMemo(() => from(getMatrixRows(matrix_id())))
 
@@ -73,6 +100,8 @@ const MatrixCell: Component<MatrixCellProps> = (props) => {
   createEffect(() => {
     setData(queryState()?.()?.rows || [])
   })
+
+  const [rowSelection, selectRow, deselectRow] = useRowSelection(data)
 
   const table = createMemo(() =>
     createSolidTable({
@@ -83,7 +112,10 @@ const MatrixCell: Component<MatrixCellProps> = (props) => {
       getCoreRowModel: getCoreRowModel(),
       getRowId: (row) => String(row['rowid']) as string, // TODO: Global constant for rowid, just to track usage
       meta: {
-        updateCell: (rowId: string, columnId: string, value: unknown) => {
+        rowSelection,
+        selectRow,
+        deselectRow,
+        updateCell: (rowId: RowId, columnId: string, value: unknown) => {
           updateMatrixRow(matrix_id(), rowId, columnId, value)
         },
       },
@@ -141,8 +173,11 @@ const MatrixCell: Component<MatrixCellProps> = (props) => {
               </tr>
             )}
           </For>
-          <RowInput cell={props.cell} columnDefs={columnDefs()} />
-          {/* <RowInput matrix_id={props.matrix_id} rowSelection={props.rowSelection} /> */}
+          <RowInput
+            cell={props.cell}
+            columnDefs={columnDefs()}
+            rowSelection={rowSelection}
+          />
         </tbody>
       </table>
 
