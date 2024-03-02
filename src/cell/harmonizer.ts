@@ -10,6 +10,7 @@ import {
   MatrixCellDefinition,
   Row,
   RowId,
+  MatrixColumnDefinition,
 } from './types'
 
 // TODO: Add extends rowid to RowType and enforce in sql strings somehow too
@@ -315,8 +316,7 @@ const deleteMatrixCell = (cell: MatrixCell) =>
 // Only text column types currently
 export const addMatrixColumn = (
   cell: MatrixCell,
-  column_key: string,
-  column_name: string,
+  column_definition: MatrixColumnDefinition,
 ) =>
   // Add the column to the matrix table, and then update the
   // matrix column definitions stored in the owner cell
@@ -325,7 +325,7 @@ export const addMatrixColumn = (
     BEGIN;
 
     ALTER TABLE ${cell.definition.matrix_id}
-    ADD COLUMN ${column_key} TEXT;
+    ADD COLUMN ${column_definition.key} ${column_definition.type};
 
     UPDATE __cell
     SET definition = json_insert(
@@ -339,7 +339,7 @@ export const addMatrixColumn = (
   `,
     {
       $cell_id: cell.id,
-      $column_definition: JSON.stringify({ key: column_key, name: column_name }),
+      $column_definition: JSON.stringify(column_definition),
     },
   )
 

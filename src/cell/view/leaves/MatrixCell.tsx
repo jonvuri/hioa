@@ -14,18 +14,20 @@ import {
   CellContext,
   RowData,
 } from '@tanstack/solid-table'
-import Button from 'solid-surfaces/components/Button'
 
 import CellInput from './matrix/CellInput'
 import CellSelect from './matrix/CellSelect'
+import NewColumnInput from './matrix/NewColumnInput'
 import RowInput from './matrix/RowInput'
 import { useRowSelection, RowSelection } from './matrix/selection'
+
 import { addMatrixColumn, getMatrixRows, updateMatrixRow } from '../../harmonizer'
 import {
   Row,
   RowId,
   MatrixCell as MatrixCellType,
   MatrixColumnDefinition,
+  MatrixColumnType,
 } from '../../types'
 
 import styles from './MatrixCell.module.sass'
@@ -122,27 +124,26 @@ const MatrixCell: Component<MatrixCellProps> = (props) => {
     }),
   )
 
-  const handleAddColumn = () => {
-    // Add a new bogus column to the matrix
-    const column_key = `column_${tableColumnDefs().length + 1}`
-    const column_name = `Column ${tableColumnDefs().length + 1}`
-    addMatrixColumn(props.cell, column_key, column_name)
+  const handleAddColumn = async (column_name: string, column_type: MatrixColumnType) => {
+    const column_key = `column_${columnDefs().length + 1}`
+
+    const column_definition = {
+      key: column_key,
+      name: column_name,
+      type: column_type,
+    }
+
+    await addMatrixColumn(props.cell, column_definition)
 
     // Make optimistic update to column defs
-    setColumnDefs([
-      ...columnDefs(),
-      {
-        key: column_key,
-        name: column_name,
-      },
-    ])
+    setColumnDefs([...columnDefs(), column_definition])
 
     // In the future, might be other default column values than null
     setData(data().map((row) => ({ ...row, [column_key]: null })))
   }
 
   return (
-    <>
+    <div class={styles['container']}>
       <table class={styles['table']}>
         <thead>
           <For each={table().getHeaderGroups()}>
@@ -180,9 +181,8 @@ const MatrixCell: Component<MatrixCellProps> = (props) => {
           />
         </tbody>
       </table>
-
-      <Button onClick={handleAddColumn}>Add Column</Button>
-    </>
+      <NewColumnInput onAddColumn={handleAddColumn} />
+    </div>
   )
 }
 

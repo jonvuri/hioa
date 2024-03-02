@@ -60,10 +60,14 @@ type ListCell = ListCellBase & {
 }
 
 // == MATRIX CELL ==
+
+// Should be a valid SQLite type affinity https://www.sqlite.org/datatype3.html
+export type MatrixColumnType = 'TEXT' | 'NUMERIC' | 'INTEGER' | 'REAL' | 'BLOB'
+
 export type MatrixColumnDefinition = {
   key: string
   name: string
-  // Just text type value for now
+  type: MatrixColumnType
 }
 
 export type MatrixCellDefinition = {
@@ -97,7 +101,7 @@ export type DehydratedCell =
 
 export type Cell = TextCell | ListCell | MatrixCell
 
-type ColumnData = string | number | boolean | null | undefined
+type ColumnData = string | number | boolean | bigint | null | undefined
 
 // TODO: audit for bigint vs string, should be just bigint ideally
 export type RowId = bigint | string
