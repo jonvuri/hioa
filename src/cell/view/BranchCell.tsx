@@ -7,7 +7,8 @@ import Tagged from 'solid-surfaces/components/stellation/Tagged'
 
 import MatrixCell from './leaves/MatrixCell'
 import TextCell from './leaves/TextCell'
-import { createCell, deleteCell } from '../harmonizer'
+import DeleteCell from './DeleteCell'
+import { createCell } from '../harmonizer'
 import { Cell, CellType } from '../types'
 
 import styles from './BranchCell.module.sass'
@@ -75,10 +76,6 @@ type CellHeaderProps = {
 }
 
 const CellHeader: Component<CellHeaderProps> = (props) => {
-  const handleDelete = () => {
-    deleteCell(props.cell)
-  }
-
   return (
     <div class={styles['cell-header-container']}>
       <div class={styles['cell-header-title']}>
@@ -88,9 +85,7 @@ const CellHeader: Component<CellHeaderProps> = (props) => {
         &nbsp;&nbsp;
         <Dimmed>[{props.cell.id}]</Dimmed>
       </div>
-      <div>
-        <Button onClick={handleDelete}>x</Button>
-      </div>
+      <DeleteCell cell={props.cell} />
     </div>
   )
 }

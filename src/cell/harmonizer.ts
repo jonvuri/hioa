@@ -222,16 +222,50 @@ export const createCell = (
   )
 }
 
-export const deleteCell = (cell: Cell) => {
-  if (cell.type === CellType.Matrix) {
-    return deleteMatrixCell(cell)
-  }
+export const deleteCellAndChildren = async (cell: Cell) => {
+  const matrix_ids = await execSql(
+    `
+    WITH RECURSIVE
+    child_cell(id) AS (
+      VALUES($cell_id)
+
+      UNION
+
+      SELECT __cell.id
+      FROM __cell, child_cell
+      WHERE __cell.parent_id = child_cell.id
+    )
+    SELECT json_extract(definition, '$.matrix_id') AS matrix_id
+    FROM __cell
+    WHERE __cell.id IN child_cell AND __cell.type = $cell_type;
+  `,
+    {
+      $cell_id: cell.id,
+      $cell_type: CellType.Matrix,
+    },
+  )
 
   return execSql(
     `
+    BEGIN;
+
+    ${matrix_ids.map((row) => `DROP TABLE ${row.matrix_id};`).join('\n')}
+
+    WITH RECURSIVE
+    child_cell(id) AS (
+      VALUES($cell_id)
+
+      UNION
+
+      SELECT __cell.id
+      FROM __cell, child_cell
+      WHERE __cell.parent_id = child_cell.id
+    )
     DELETE FROM __cell
-    WHERE id = $cell_id;
-  `,
+      WHERE __cell.id IN child_cell;
+
+    COMMIT;
+    `,
     {
       $cell_id: cell.id,
     },
@@ -294,24 +328,6 @@ const createMatrixCell = (
     },
   )
 }
-
-const deleteMatrixCell = (cell: MatrixCell) =>
-  // Delete the matrix table as well as its owner cell
-  execSql(
-    `
-    BEGIN;
-
-    DROP TABLE ${cell.definition.matrix_id};
-
-    DELETE FROM __cell
-    WHERE id = $cell_id;
-
-    COMMIT;
-  `,
-    {
-      $cell_id: cell.id,
-    },
-  )
 
 // Only text column types currently
 export const addMatrixColumn = (
