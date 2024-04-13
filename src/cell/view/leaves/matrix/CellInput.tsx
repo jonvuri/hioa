@@ -6,17 +6,17 @@ import cellStyles from './Cell.module.sass'
 import styles from './CellInput.module.sass'
 
 type CellInputProps = {
-  value: string
+  value: string | null
   onCommit: (value: string) => void
 }
 
 const CellInput = (props: CellInputProps) => {
   let inputRef: HTMLInputElement
-  const [value, setValue] = createSignal(props.value)
+  const [value, setValue] = createSignal(props.value || '')
   const [editing, setEditing] = createSignal(false)
 
   const reset = () => {
-    setValue(props.value)
+    setValue(props.value || '')
     setEditing(false)
   }
 

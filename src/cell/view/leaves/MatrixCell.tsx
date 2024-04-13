@@ -58,9 +58,9 @@ const SelectionCell = (props: CellContext<Row, unknown>) => {
   )
 }
 
-const DataCell = (props: CellContext<Row, unknown>) => (
+const DataCell = (props: CellContext<Row, string | null>) => (
   <CellInput
-    value={String(props.getValue())}
+    value={props.getValue()}
     onCommit={(value) => {
       props.table.options.meta?.updateCell(props.row.id, props.column.id, value)
     }}
