@@ -12,6 +12,8 @@ type CellInputProps = {
 
 const CellInput = (props: CellInputProps) => {
   let inputRef: HTMLInputElement
+  // TODO: Refactor to deal with reactivity warning
+  // https://github.com/solidjs-community/eslint-plugin-solid/blob/main/packages/eslint-plugin-solid/docs/reactivity.md
   const [value, setValue] = createSignal(props.value || '')
   const [editing, setEditing] = createSignal(false)
 

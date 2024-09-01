@@ -1,5 +1,4 @@
 /* @refresh reload */
-/* eslint-disable import/no-unused-modules */
 import { render } from 'solid-js/web'
 // import 'solid-devtools'
 

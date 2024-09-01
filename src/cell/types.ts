@@ -1,4 +1,4 @@
-export enum CellType {
+enum CellType {
   // Parent types
   List = 1,
   Matrix = 2,
@@ -37,7 +37,7 @@ type DehydratedTextCell = TextCellBase & {
   definition: string
 }
 
-export type TextCell = TextCellBase & {
+type TextCell = TextCellBase & {
   definition: TextCellDefinition
 }
 
@@ -62,15 +62,15 @@ type ListCell = ListCellBase & {
 // == MATRIX CELL ==
 
 // Should be a valid SQLite type affinity https://www.sqlite.org/datatype3.html
-export type MatrixColumnType = 'TEXT' | 'NUMERIC' | 'INTEGER' | 'REAL' | 'BLOB'
+type MatrixColumnType = 'TEXT' | 'NUMERIC' | 'INTEGER' | 'REAL' | 'BLOB'
 
-export type MatrixColumnDefinition = {
+type MatrixColumnDefinition = {
   key: string
   name: string
   type: MatrixColumnType
 }
 
-export type MatrixCellDefinition = {
+type MatrixCellDefinition = {
   cell_type: CellType.Matrix
   matrix_id: string
   column_definitions: MatrixColumnDefinition[]
@@ -85,25 +85,33 @@ type DehydratedMatrixCell = MatrixCellBase & {
   definition: string
 }
 
-export type MatrixCell = MatrixCellBase & {
+type MatrixCell = MatrixCellBase & {
   definition: MatrixCellDefinition
 }
 
-export type CellDefinition =
-  | TextCellDefinition
-  | ListCellDefinition
-  | MatrixCellDefinition
+type CellDefinition = TextCellDefinition | ListCellDefinition | MatrixCellDefinition
 
-export type DehydratedCell =
-  | DehydratedTextCell
-  | DehydratedListCell
-  | DehydratedMatrixCell
+type DehydratedCell = DehydratedTextCell | DehydratedListCell | DehydratedMatrixCell
 
-export type Cell = TextCell | ListCell | MatrixCell
+type Cell = TextCell | ListCell | MatrixCell
 
 type ColumnData = string | number | boolean | bigint | null | undefined
 
 // TODO: audit for bigint vs string, should be just bigint ideally
-export type RowId = bigint | string
+type RowId = bigint | string
 
-export type Row = Record<string, ColumnData> & { rowid: RowId }
+type Row = Record<string, ColumnData> & { rowid: RowId }
+
+export { CellType }
+export type {
+  TextCell,
+  MatrixColumnType,
+  MatrixColumnDefinition,
+  MatrixCellDefinition,
+  MatrixCell,
+  CellDefinition,
+  DehydratedCell,
+  Cell,
+  RowId,
+  Row,
+}

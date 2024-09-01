@@ -5,10 +5,9 @@ import 'surface-fonts/index.css'
 
 import { ExecResults } from './db/client'
 import { initialize } from './cell/harmonizer'
-
+import Router from './Router'
 import './global.sass'
 import styles from './App.module.sass'
-import Router from './Router'
 
 const App: Component = () => {
   const [initialized] = createResource<ExecResults>(initialize)

@@ -10,6 +10,8 @@ type SelectionCellProps = {
 }
 
 const SelectionCell: Component<SelectionCellProps> = (props) => {
+  // TODO: Refactor to deal with reactivity warning
+  // https://github.com/solidjs-community/eslint-plugin-solid/blob/main/packages/eslint-plugin-solid/docs/reactivity.md
   const [checked, setChecked] = createSignal(props.value)
 
   return (

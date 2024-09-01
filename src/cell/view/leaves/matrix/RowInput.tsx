@@ -1,13 +1,12 @@
 import { Component, For, Match, Switch, createEffect } from 'solid-js'
 import { createStore } from 'solid-js/store'
-
 import Input from 'solid-surfaces/components/Input'
 import Tagged from 'solid-surfaces/components/stellation/Tagged'
 
 import { deleteMatrixRows, insertMatrixRow } from '../../../harmonizer'
 import { MatrixCell, MatrixColumnDefinition } from '../../../types'
-import { RowSelection } from './selection'
 
+import { RowSelection } from './selection'
 import styles from './RowInput.module.sass'
 
 type RowInputProps = {

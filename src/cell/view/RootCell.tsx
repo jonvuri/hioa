@@ -1,8 +1,5 @@
 import { Accessor, Component, Show, createMemo, from } from 'solid-js'
 import { Transition } from 'solid-transition-group'
-
-import { getCell, listCellsInRoot } from '../harmonizer'
-
 import Button from 'solid-surfaces/components/Button'
 import { Grid } from 'solid-surfaces/components/Grid'
 import Lined from 'solid-surfaces/components/stellation/Lined'
@@ -10,10 +7,10 @@ import Tagged from 'solid-surfaces/components/stellation/Tagged'
 import { Dimmed, Shimmer } from 'solid-surfaces/components/typo/Color'
 import { ContrastHeader, Header } from 'solid-surfaces/components/typo/Header'
 
-import { CellContents, CellsInRootContext } from './BranchCell'
-
+import { getCell, listCellsInRoot } from '../harmonizer'
 import { Cell } from '../types'
 
+import { CellContents, CellsInRootContext } from './BranchCell'
 import styles from './RootCell.module.sass'
 
 const rootIdForCell = (cell: Cell) => cell.root_id || cell.id

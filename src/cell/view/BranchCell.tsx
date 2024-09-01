@@ -1,21 +1,20 @@
 import { Accessor, Component, For, createContext, createMemo, useContext } from 'solid-js'
-
 import Button from 'solid-surfaces/components/Button'
 import { Dimmed } from 'solid-surfaces/components/typo/Color'
 import { GutterHeader } from 'solid-surfaces/components/typo/Header'
 import Tagged from 'solid-surfaces/components/stellation/Tagged'
 
-import MatrixCell from './leaves/MatrixCell'
-import TextCell from './leaves/TextCell'
-import DeleteCell from './DeleteCell'
 import { createCell } from '../harmonizer'
 import { Cell, CellType } from '../types'
 
+import MatrixCell from './leaves/MatrixCell'
+import TextCell from './leaves/TextCell'
+import DeleteCell from './DeleteCell'
 import styles from './BranchCell.module.sass'
 
 const rootIdForCell = (cell: Cell) => cell.root_id || cell.id
 
-export const CellsInRootContext = createContext<Accessor<Cell[]>>(() => [])
+const CellsInRootContext = createContext<Accessor<Cell[]>>(() => [])
 
 type ListCellProps = {
   cell: Cell
@@ -94,7 +93,7 @@ type CellContentsProps = {
   cell: Cell
 }
 
-export const CellContents: Component<CellContentsProps> = (props) => {
+const CellContents: Component<CellContentsProps> = (props) => {
   return (
     <div class={styles['cell-contents-container']}>
       {props.cell.type === CellType.List ? (
@@ -120,3 +119,5 @@ const BranchCell: Component<BranchCellProps> = (props) => (
     <CellContents cell={props.cell} />
   </Tagged>
 )
+
+export { CellsInRootContext, CellContents }

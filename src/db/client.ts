@@ -3,8 +3,9 @@ import { BehaviorSubject, Observable, share } from 'rxjs'
 import sqliteParser from 'sqlite-parser'
 import type { SqliteStatement } from 'sqlite-parser'
 
+// TODO: Use constructor
+// eslint-disable-next-line import-x/default
 import DbWorker from './worker?worker'
-
 import { ClientMessage, UpdateInfo, WorkerMessage } from './types'
 
 const worker = new DbWorker()
@@ -163,7 +164,7 @@ const checkForTableDeletes = (sql: Sql) => {
   }
 }
 
-export type QueryState<RowType> =
+type QueryState<RowType> =
   | {
       // Loading
       sql: Sql
@@ -189,7 +190,7 @@ export type QueryState<RowType> =
       updateInfo: UpdateInfo | null
     }
 
-export type SingleResultQueryState<Result> =
+type SingleResultQueryState<Result> =
   | {
       // Loading
       sql: Sql
@@ -260,7 +261,7 @@ const createObservable = (sql: Sql) =>
     }),
   )
 
-export const getObservable = <RowType>(sql: Sql) => {
+const getObservable = <RowType>(sql: Sql) => {
   let observable = sqlObservables[sql]
 
   if (!observable) {
@@ -306,9 +307,9 @@ promiseWorker.register((msg) => {
   }
 })
 
-export type ExecResults = UnreifiedRow[]
+type ExecResults = UnreifiedRow[]
 
-export const execSql = async (
+const execSql = async (
   sql: string,
   bindParams?: unknown[] | Record<string, unknown>,
 ): Promise<ExecResults> => {
@@ -331,3 +332,6 @@ declare global {
   }
 }
 window.sql = execSql
+
+export { getObservable, execSql }
+export type { QueryState, SingleResultQueryState, ExecResults }

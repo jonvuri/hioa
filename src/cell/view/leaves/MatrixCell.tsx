@@ -15,12 +15,6 @@ import {
   RowData,
 } from '@tanstack/solid-table'
 
-import CellInput from './matrix/CellInput'
-import CellSelect from './matrix/CellSelect'
-import NewColumnInput from './matrix/NewColumnInput'
-import RowInput from './matrix/RowInput'
-import { useRowSelection, RowSelection } from './matrix/selection'
-
 import { addMatrixColumn, getMatrixRows, updateMatrixRow } from '../../harmonizer'
 import {
   Row,
@@ -30,9 +24,15 @@ import {
   MatrixColumnType,
 } from '../../types'
 
+import CellInput from './matrix/CellInput'
+import CellSelect from './matrix/CellSelect'
+import NewColumnInput from './matrix/NewColumnInput'
+import RowInput from './matrix/RowInput'
+import { useRowSelection, RowSelection } from './matrix/selection'
 import styles from './MatrixCell.module.sass'
 
 declare module '@tanstack/solid-table' {
+  // Needs to match the initial TableMeta declaration, but doesn't use the generic
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface TableMeta<TData extends RowData> {
     rowSelection: RowSelection

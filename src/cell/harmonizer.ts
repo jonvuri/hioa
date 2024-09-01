@@ -1,6 +1,7 @@
 import { filter, map, scan } from 'rxjs'
 
 import { execSql, getObservable, QueryState, SingleResultQueryState } from '../db/client'
+
 import {
   Cell,
   DehydratedCell,
@@ -160,7 +161,7 @@ const resultEmitFilter = <ResultType extends { rowid: bigint }>(
   BigInt(newQueryState.result?.rowid) === newQueryState.updateInfo?.rowid
 
 // Initialize cell table on load if it doesn't yet exist
-export const initialize = () =>
+const initialize = () =>
   execSql(`
     CREATE TABLE IF NOT EXISTS __cell (
       id TEXT,
@@ -178,7 +179,7 @@ export const initialize = () =>
     CREATE INDEX IF NOT EXISTS __cell_parent_id ON __cell (parent_id);
   `)
 
-export const createCell = (
+const createCell = (
   cell_type: CellType,
   parent_id: string | null,
   root_id: string | null,
@@ -222,7 +223,7 @@ export const createCell = (
   )
 }
 
-export const deleteCellAndChildren = async (cell: Cell) => {
+const deleteCellAndChildren = async (cell: Cell) => {
   const matrix_ids = await execSql(
     `
     WITH RECURSIVE
@@ -330,10 +331,7 @@ const createMatrixCell = (
 }
 
 // Only text column types currently
-export const addMatrixColumn = (
-  cell: MatrixCell,
-  column_definition: MatrixColumnDefinition,
-) =>
+const addMatrixColumn = (cell: MatrixCell, column_definition: MatrixColumnDefinition) =>
   // Add the column to the matrix table, and then update the
   // matrix column definitions stored in the owner cell
   execSql(
@@ -359,11 +357,7 @@ export const addMatrixColumn = (
     },
   )
 
-export const insertMatrixRow = (
-  matrix_id: string,
-  column_keys: string[],
-  values: unknown[],
-) =>
+const insertMatrixRow = (matrix_id: string, column_keys: string[], values: unknown[]) =>
   execSql(
     `
       INSERT INTO ${matrix_id} (
@@ -376,7 +370,7 @@ export const insertMatrixRow = (
     values,
   )
 
-export const updateMatrixRow = (
+const updateMatrixRow = (
   matrix_id: string,
   row_id: RowId,
   column_id: string,
@@ -401,7 +395,7 @@ export const updateMatrixRow = (
 //     { $row_id: row_id },
 //   )
 
-export const deleteMatrixRows = (matrix_id: string, row_ids: RowId[]) =>
+const deleteMatrixRows = (matrix_id: string, row_ids: RowId[]) =>
   execSql(
     `
       DELETE FROM ${matrix_id}
@@ -410,7 +404,7 @@ export const deleteMatrixRows = (matrix_id: string, row_ids: RowId[]) =>
     row_ids,
   )
 
-export const getMatrixRows = (matrix_id: string) =>
+const getMatrixRows = (matrix_id: string) =>
   getObservable<Row>(
     `
         SELECT
@@ -424,7 +418,7 @@ export const getMatrixRows = (matrix_id: string) =>
     map(rowCacheEmitter),
   )
 
-export const listRootCells = () =>
+const listRootCells = () =>
   getObservable<Cell>(
     `
       SELECT
@@ -445,7 +439,7 @@ export const listRootCells = () =>
     map(rowCacheEmitter),
   )
 
-export const listCellsInRoot = (root_id: string) =>
+const listCellsInRoot = (root_id: string) =>
   getObservable<DehydratedCell>(
     `
       SELECT
@@ -504,7 +498,7 @@ export const listCellsInRoot = (root_id: string) =>
     map(rowCacheEmitter),
   )
 
-export const getCell = (cell_id: string) => {
+const getCell = (cell_id: string) => {
   const listQueryState = getObservable<DehydratedCell>(
     `
       SELECT
@@ -549,7 +543,7 @@ export const getCell = (cell_id: string) => {
   return cellQueryState
 }
 
-export const updateCellDefinition = (cell_id: string, definition: CellDefinition) =>
+const updateCellDefinition = (cell_id: string, definition: CellDefinition) =>
   execSql(
     `
     UPDATE __cell
@@ -559,3 +553,18 @@ export const updateCellDefinition = (cell_id: string, definition: CellDefinition
   `,
     { $cell_id: cell_id, $definition: JSON.stringify(definition) },
   )
+
+export {
+  initialize,
+  createCell,
+  deleteCellAndChildren,
+  addMatrixColumn,
+  insertMatrixRow,
+  updateMatrixRow,
+  deleteMatrixRows,
+  getMatrixRows,
+  listRootCells,
+  listCellsInRoot,
+  getCell,
+  updateCellDefinition,
+}

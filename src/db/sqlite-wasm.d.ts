@@ -1,6 +1,5 @@
-/* eslint-disable @typescript-eslint/ban-types */
+/* eslint-disable @typescript-eslint/no-unsafe-function-type */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable import/no-unused-modules */
 // unofficial sqlite3 types.
 // These are typed only for my scope
 
@@ -89,18 +88,18 @@ declare module '@sqlite.org/sqlite-wasm' {
     checkRc: Function
   }
 
-  export class JsStorageDb extends DatabaseApi {
+  class JsStorageDb extends DatabaseApi {
     constructor(mode: 'local' | 'session')
     storageSize(): number
     clearStorage(): void
   }
 
-  export class OpfsDatabase extends DatabaseApi {
+  class OpfsDatabase extends DatabaseApi {
     constructor(filename: string)
   }
 
-  export type Flags = 'c' | 'w' | 'r' | 't'
-  export class Database extends DatabaseApi {
+  type Flags = 'c' | 'w' | 'r' | 't'
+  class Database extends DatabaseApi {
     constructor(options: { filename: string; flags: string; vfs?: any })
     constructor(filename: string, flags: string, vfs?: any)
   }
@@ -889,4 +888,7 @@ declare module '@sqlite.org/sqlite-wasm' {
     sqlite3_wasm_vfs_unlink: any
     ctype: any
   }
+
+  export { Database, JsStorageDb, OpfsDatabase }
+  export type { PreparedStatement, Sqlite3Static, Flags }
 }

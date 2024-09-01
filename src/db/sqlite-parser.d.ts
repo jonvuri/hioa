@@ -1,4 +1,3 @@
-/* eslint-disable import/no-unused-modules */
 declare module 'sqlite-parser' {
   type TableIdentifier = {
     type: 'identifier'

@@ -1,12 +1,12 @@
 type Sql = string
 
-export type UpdateInfo = {
+type UpdateInfo = {
   table: string
   rowid: bigint
 }
 
 // Message from client to worker
-export type ClientMessage =
+type ClientMessage =
   | {
       type: 'query'
       payload: {
@@ -24,7 +24,7 @@ export type ClientMessage =
     }
 
 // Message from worker to client
-export type WorkerMessage =
+type WorkerMessage =
   | {
       type: 'subscribed-query-result'
       payload: {
@@ -48,3 +48,5 @@ export type WorkerMessage =
       type: 'log'
       payload: string
     }
+
+export type { UpdateInfo, ClientMessage, WorkerMessage }

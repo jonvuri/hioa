@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import solidPlugin from 'vite-plugin-solid'
+import sassDts from 'vite-plugin-sass-dts'
 // import devtools from 'solid-devtools/vite'
 
 export default defineConfig({
@@ -13,6 +14,10 @@ export default defineConfig({
     //   autoname: true, // e.g. enable autoname
     // }),
     solidPlugin(),
+    sassDts({
+      enabledMode: ['development', 'production'],
+      prettierFilePath: './.prettierrc.json',
+    }),
   ],
   server: {
     port: 3000,
