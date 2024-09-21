@@ -15,8 +15,8 @@ dependencies:
     specifier: ^0.1.1
     version: 0.1.1(solid-js@1.8.12)
   '@sqlite.org/sqlite-wasm':
-    specifier: 3.43.0-build3
-    version: 3.43.0-build3
+    specifier: 3.46.1-build3
+    version: 3.46.1-build3
   '@tanstack/solid-table':
     specifier: ^8.10.4
     version: 8.10.4(solid-js@1.8.12)
@@ -1050,11 +1050,9 @@ packages:
       solid-js: 1.8.12
     dev: false
 
-  /@sqlite.org/sqlite-wasm@3.43.0-build3:
-    resolution: {integrity: sha512-Iry/g6VlbYTeGb7XWBZZKGmB4KRFFKxv3urcJwYXL88cr3hxJK2QmO1v0fQ5gOns23R+422XGSGvwjl51za3fg==}
+  /@sqlite.org/sqlite-wasm@3.46.1-build3:
+    resolution: {integrity: sha512-9FY9C1A8jZTU8Lm6sz16zBeBN+jFIUL/LGAZMym9QaRB796/KHHL9xo6OgaTL8iDw2VeltGen7hNwJedVN/j4w==}
     hasBin: true
-    optionalDependencies:
-      comlink: 4.4.1
     dev: false
 
   /@tanstack/solid-table@8.10.4(solid-js@1.8.12):
@@ -1569,12 +1567,6 @@ packages:
 
   /color-name@1.1.4:
     resolution: {integrity: sha512-dOy+3AuW3a2wNbZHIuMZpTcgjGuLU/uBL/ubcZF9OXbDo8ff4O8yVp5Bf0efS8uEoYo5q4Fx7dY9OgQGXgAsQA==}
-
-  /comlink@4.4.1:
-    resolution: {integrity: sha512-+1dlx0aY5Jo1vHy/tSsIGpSkN4tS9rZSW8FIhG0JH/crs9wwweswIo/POr451r7bZww3hFbPAKnTpimzL/mm4Q==}
-    requiresBuild: true
-    dev: false
-    optional: true
 
   /concat-map@0.0.1:
     resolution: {integrity: sha512-/Srv4dswyQNBfohGpz9o6Yb3Gz3SrUDqBH5rTuhGR7ahtlbYKnVxw2bCFMRljaA7EXHaXZ8wsHdodFvbkhKmqg==}

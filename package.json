@@ -33,7 +33,7 @@
     "@codemirror/state": "^6.4.1",
     "@codemirror/view": "^6.28.1",
     "@lutaok/solid-modal": "^0.1.1",
-    "@sqlite.org/sqlite-wasm": "3.43.0-build3",
+    "@sqlite.org/sqlite-wasm": "3.46.1-build3",
     "@tanstack/solid-table": "^8.10.4",
     "chrono-node": "^2.7.6",
     "croner": "^8.0.0",

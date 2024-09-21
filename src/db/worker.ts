@@ -137,7 +137,7 @@ const start = function (sqlite3: Sqlite3Static) {
         runStatement(sql, { table, rowid })
       }
     },
-    null,
+    0,
   )
 
   dbReady(db)
